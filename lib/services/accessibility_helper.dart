@@ -1,16 +1,6 @@
-import 'dart:convert';
-import 'dart:js_interop';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-
-@JS('accessibilityBridge.speak')
-external void _speakJS(String text);
-
-@JS('accessibilityBridge.vibrate')
-external void _vibrateJS(JSAny pattern);
-
-@JS('JSON.parse')
-external JSAny _jsonParse(String json);
+import 'accessibility_bridge.dart';
 
 enum HapticPattern {
   timeToGetOff('Time to Get Off', [200, 100, 200]),
@@ -27,7 +17,7 @@ class AccessibilityHelper {
   static void speakText(String text) {
     if (kIsWeb) {
       try {
-        _speakJS(text);
+        speakJS(text);
         debugPrint('[TTS] Speaking: $text');
         return;
       } catch (e) {
@@ -41,8 +31,7 @@ class AccessibilityHelper {
   static void triggerHaptic(HapticPattern pattern) {
     if (kIsWeb) {
       try {
-        final jsonStr = jsonEncode(pattern.milliseconds);
-        _vibrateJS(_jsonParse(jsonStr));
+        vibrateJS(pattern.milliseconds);
         debugPrint('[Haptic] Triggered pattern: ${pattern.label}');
         return;
       } catch (e) {

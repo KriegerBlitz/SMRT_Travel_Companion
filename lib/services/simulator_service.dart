@@ -29,6 +29,7 @@ class SimulatorService extends ChangeNotifier {
   bool _forceLiftOutage = false;
   bool _forceRainNowcast = false;
   int _deadReckoningElapsedSeconds = 0;
+  int _currentStop = 4;
 
   DemoScenario get activeScenario => _activeScenario;
   bool get forceDisruption => _forceDisruption;
@@ -37,6 +38,13 @@ class SimulatorService extends ChangeNotifier {
   bool get forceLiftOutage => _forceLiftOutage;
   bool get forceRainNowcast => _forceRainNowcast;
   int get deadReckoningElapsedSeconds => _deadReckoningElapsedSeconds;
+  int get currentStop => _currentStop;
+  bool get isDeadReckoningApproaching => _currentStop == 4;
+
+  void setCurrentStop(int stop) {
+    _currentStop = stop.clamp(1, 9);
+    notifyListeners();
+  }
 
   /// Mandatory Rule: Returns true whenever any simulation toggle is active.
   /// UI MUST display the [Simulated Data] badge whenever this is true.
