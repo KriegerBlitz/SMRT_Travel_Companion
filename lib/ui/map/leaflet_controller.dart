@@ -64,4 +64,5 @@ abstract class LeafletController {
   void drawShelteredWalkways(List<List<LatLng>> segments);
   void setStationMarkers(List<MapStationMarker> stations);
   void fitBounds(List<LatLng> coords);
+  void panToStation(double lat, double lng, {int zoom = 15});
 }

@@ -7,6 +7,7 @@ import 'services/onemap_service.dart';
 import 'services/simulator_service.dart';
 import 'services/weather_service.dart';
 import 'ui/debug/debug_panel.dart';
+import 'ui/journeys/all_stations_view.dart';
 import 'ui/journeys/conversational_search_view.dart';
 import 'ui/journeys/mdm_lim_journey_view.dart';
 import 'ui/journeys/rachel_journey_view.dart';
@@ -55,9 +56,11 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
 
   LeafletController? _mapController;
 
-  int _selectedTabIndex = 0; // 0: Rachel, 1: Mdm Lim, 2: AI Search
+  int _selectedTabIndex = 0; // 0: Rachel, 1: Mdm Lim, 2: AI Search, 3: Stations
   bool _isLargeText = false;
   bool _showRachelAlternative = false;
+  bool _isMapExpanded = false;
+  StationInfo? _focusedStation;
 
   TrainServiceAlert _alert = TrainServiceAlert.normal();
   Map<String, StationCrowdInfo> _crowdMap = {};
@@ -152,22 +155,26 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
           label: 'Wheelchair-Accessible Bus 147',
         );
       }
-    } else {
+    } else if (_selectedTabIndex == 2) {
       // Conversational Route
+      route = OneMapService.buildRachelRoute();
+    } else {
+      // All Stations Explorer Tab
       route = OneMapService.buildRachelRoute();
     }
 
-    // Draw main route polyline
-    controller.drawRoute(
-      route.allCoordinates,
-      color: _selectedTabIndex == 1 ? '#8B5CF6' : '#009645',
-      weight: 6,
-    );
+    if (_selectedTabIndex != 3) {
+      // Draw main route polyline
+      controller.drawRoute(
+        route.allCoordinates,
+        color: _selectedTabIndex == 1 ? '#8B5CF6' : '#009645',
+        weight: 6,
+      );
+    }
 
-    // Station Markers with 3-level crowd indicator dots
+    // Station Markers with 3-level crowd indicator dots for all stations
     final List<MapStationMarker> markers = [];
     for (final stn in CanonicalLineCodes.stations) {
-      // Check crowd level
       String crowdStr = 'low';
       if (_simulator.forcedCrowdLevel == CrowdLevel.high) {
         crowdStr = 'high';
@@ -187,7 +194,8 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
         code: stn.code,
         name: stn.name,
         lineName: stn.primaryLine.displayName,
-        lineColor: '#${stn.primaryLine.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
+        lineColor:
+            '#${stn.primaryLine.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
         lat: stn.lat,
         lng: stn.lng,
         crowd: crowdStr,
@@ -196,7 +204,12 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
     }
 
     controller.setStationMarkers(markers);
-    controller.fitBounds(route.allCoordinates);
+
+    if (_selectedTabIndex == 3 && _focusedStation != null) {
+      controller.panToStation(_focusedStation!.lat, _focusedStation!.lng, zoom: 16);
+    } else if (_selectedTabIndex != 3) {
+      controller.fitBounds(route.allCoordinates);
+    }
   }
 
   @override
@@ -227,7 +240,138 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
           )
         : null;
 
-    return Scaffold(
+    final contentWidget = SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Persona Switcher Bar (4 Touch-Friendly Tabs)
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blueGrey.shade700),
+            ),
+            child: Row(
+              children: [
+                _buildPersonaTab(
+                  index: 0,
+                  title: 'Rachel',
+                  subtitle: 'Commuter',
+                  icon: Icons.person,
+                  color: const Color(0xFF009645),
+                ),
+                _buildPersonaTab(
+                  index: 1,
+                  title: 'Mdm Lim',
+                  subtitle: 'Accessibility',
+                  icon: Icons.accessible,
+                  color: Colors.purpleAccent,
+                ),
+                _buildPersonaTab(
+                  index: 2,
+                  title: 'AI Trip',
+                  subtitle: 'Natural Lang',
+                  icon: Icons.auto_awesome,
+                  color: Colors.cyanAccent,
+                ),
+                _buildPersonaTab(
+                  index: 3,
+                  title: 'Stations',
+                  subtitle: 'All Lines',
+                  icon: Icons.hub_outlined,
+                  color: Colors.tealAccent,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Active View Content
+          if (_selectedTabIndex == 0)
+            RachelJourneyView(
+              currentRoute: rachelRoute,
+              alternativeRoute: rachelAltRoute,
+              alert: isDisrupted
+                  ? TrainServiceAlert(
+                      status: 2,
+                      line: 'EWL',
+                      direction: 'To Pasir Ris',
+                      affectedStations: ['EW1', 'EW2', 'EW3'],
+                      freePublicBus: true,
+                      freeMrtShuttle: true,
+                      message:
+                          'Signal fault between Tampines and Pasir Ris. Free MRT Shuttle bus running.',
+                      timestamp: DateTime.now(),
+                    )
+                  : TrainServiceAlert.normal(),
+              crowdInfo: StationCrowdInfo(
+                stationCode: 'EW2',
+                realTime: _simulator.forcedCrowdLevel,
+                forecast30Min: _simulator.forceCrowdForecastSpike
+                    ? CrowdLevel.high
+                    : CrowdLevel.low,
+              ),
+              showAlternative: _showRachelAlternative,
+              onSelectAlternative: () {
+                setState(() {
+                  _showRachelAlternative = !_showRachelAlternative;
+                });
+                _syncMapLayers();
+              },
+            )
+          else if (_selectedTabIndex == 1)
+            MdmLimJourneyView(
+              currentRoute: mdmLimRoute,
+              liftMaintenance: mdmLimLiftOutage,
+              weatherNowcast: isRain
+                  ? WeatherNowcast.rainy('Outram Park',
+                      customText: 'Passing Showers')
+                  : WeatherNowcast.fair('Outram Park'),
+              wabBusArrivals: _wabBusArrivals,
+              isLargeText: _isLargeText,
+              onToggleLargeText: (val) => setState(() => _isLargeText = val),
+              deadReckoningSeconds: _simulator.deadReckoningElapsedSeconds,
+              onAdvanceTimer: () => _simulator.advanceDeadReckoningTimer(180),
+              onResetTimer: () => _simulator.resetDeadReckoningTimer(),
+            )
+          else if (_selectedTabIndex == 2)
+            ConversationalSearchView(
+              onTripPlanned: (parsed) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Parsed Route: ${parsed.fromStation ?? 'Origin'} ➔ ${parsed.toStation ?? 'Destination'} (${parsed.preference})',
+                    ),
+                    backgroundColor: const Color(0xFF009645),
+                  ),
+                );
+                _syncMapLayers();
+              },
+            )
+          else
+            AllStationsView(
+              crowdMap: _crowdMap,
+              onStationSelected: (stn) {
+                setState(() {
+                  _focusedStation = stn;
+                });
+                _mapController?.panToStation(stn.lat, stn.lng, zoom: 16);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Focused on ${stn.code} ${stn.name} on map'),
+                    backgroundColor: stn.primaryLine.color,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+
+    final mobileScaffold = Scaffold(
       key: _scaffoldKey,
       endDrawer: DebugPanel(simulator: _simulator),
       appBar: AppBar(
@@ -249,10 +393,10 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
               children: [
                 Text(
                   'MRT Companion',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'PS2 Standard · LTA DataMall',
+                  'Singapore Rail Network · Mobile Web',
                   style: TextStyle(fontSize: 10, color: Colors.white54),
                 ),
               ],
@@ -267,151 +411,112 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
               onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.tune, color: Colors.amberAccent),
             tooltip: 'Simulator & Debug Panel',
             onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 850;
-
-          final mapWidget = LeafletMapWidget(
-            height: isWide ? constraints.maxHeight : 320,
+      body: Column(
+        children: [
+          // Interactive Leaflet Map Widget
+          LeafletMapWidget(
+            height: _isMapExpanded ? 340 : 220,
             onMapReady: (controller) {
               _mapController = controller;
               _syncMapLayers();
             },
-          );
+          ),
 
-          final contentWidget = SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Map Control & Information Strip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              border: Border(
+                bottom: BorderSide(color: Colors.blueGrey.shade800),
+              ),
+            ),
+            child: Row(
               children: [
-                // Persona Switcher Bar
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.blueGrey.shade700),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildPersonaTab(
-                        index: 0,
-                        title: 'Rachel',
-                        subtitle: 'Commuter',
-                        icon: Icons.person,
-                        color: const Color(0xFF009645),
-                      ),
-                      _buildPersonaTab(
-                        index: 1,
-                        title: 'Mdm Lim',
-                        subtitle: 'Accessibility',
-                        icon: Icons.accessible,
-                        color: Colors.purpleAccent,
-                      ),
-                      _buildPersonaTab(
-                        index: 2,
-                        title: 'AI Search',
-                        subtitle: 'Natural Lang',
-                        icon: Icons.auto_awesome,
-                        color: Colors.cyanAccent,
-                      ),
-                    ],
+                Icon(
+                  _selectedTabIndex == 3 ? Icons.hub_outlined : Icons.map_outlined,
+                  size: 14,
+                  color: Colors.tealAccent,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _selectedTabIndex == 3
+                        ? 'Showing all 160+ MRT/LRT Stations'
+                        : 'Live Network Map · 3-Level PCD Density',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // Active View Content
-                if (_selectedTabIndex == 0)
-                  RachelJourneyView(
-                    currentRoute: rachelRoute,
-                    alternativeRoute: rachelAltRoute,
-                    alert: isDisrupted
-                        ? TrainServiceAlert(
-                            status: 2,
-                            line: 'EWL',
-                            direction: 'To Pasir Ris',
-                            affectedStations: ['EW1', 'EW2', 'EW3'],
-                            freePublicBus: true,
-                            freeMrtShuttle: true,
-                            message:
-                                'Signal fault between Tampines and Pasir Ris. Free MRT Shuttle bus running.',
-                            timestamp: DateTime.now(),
-                          )
-                        : TrainServiceAlert.normal(),
-                    crowdInfo: StationCrowdInfo(
-                      stationCode: 'EW2',
-                      realTime: _simulator.forcedCrowdLevel,
-                      forecast30Min: _simulator.forceCrowdForecastSpike
-                          ? CrowdLevel.high
-                          : CrowdLevel.low,
-                    ),
-                    showAlternative: _showRachelAlternative,
-                    onSelectAlternative: () {
-                      setState(() {
-                        _showRachelAlternative = !_showRachelAlternative;
-                      });
-                      _syncMapLayers();
-                    },
-                  )
-                else if (_selectedTabIndex == 1)
-                  MdmLimJourneyView(
-                    currentRoute: mdmLimRoute,
-                    liftMaintenance: mdmLimLiftOutage,
-                    weatherNowcast: isRain
-                        ? WeatherNowcast.rainy('Outram Park',
-                            customText: 'Passing Showers')
-                        : WeatherNowcast.fair('Outram Park'),
-                    wabBusArrivals: _wabBusArrivals,
-                    isLargeText: _isLargeText,
-                    onToggleLargeText: (val) => setState(() => _isLargeText = val),
-                    deadReckoningSeconds:
-                        _simulator.deadReckoningElapsedSeconds,
-                    onAdvanceTimer: () => _simulator.advanceDeadReckoningTimer(180),
-                    onResetTimer: () => _simulator.resetDeadReckoningTimer(),
-                  )
-                else
-                  ConversationalSearchView(
-                    onTripPlanned: (parsed) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Parsed Route: ${parsed.fromStation ?? 'Origin'} ➔ ${parsed.toStation ?? 'Destination'} (${parsed.preference})',
-                          ),
-                          backgroundColor: const Color(0xFF009645),
+                InkWell(
+                  onTap: () => setState(() => _isMapExpanded = !_isMapExpanded),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isMapExpanded ? Icons.unfold_less : Icons.unfold_more,
+                          size: 14,
+                          color: Colors.cyanAccent,
                         ),
-                      );
-                      _syncMapLayers();
-                    },
+                        const SizedBox(width: 2),
+                        Text(
+                          _isMapExpanded ? 'Minimize' : 'Expand Map',
+                          style: const TextStyle(
+                            color: Colors.cyanAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
               ],
             ),
-          );
+          ),
 
-          if (isWide) {
-            return Row(
-              children: [
-                Expanded(flex: 5, child: mapWidget),
-                Expanded(flex: 4, child: contentWidget),
-              ],
-            );
-          }
+          // Scrollable Vertical Content
+          Expanded(child: contentWidget),
+        ],
+      ),
+    );
 
-          return Column(
-            children: [
-              mapWidget,
-              Expanded(child: contentWidget),
+    // Lock to vertical mobile layout with side bars for desktop/web browsers
+    return Scaffold(
+      backgroundColor: const Color(0xFF070B14),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 440),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            border: Border.symmetric(
+              vertical: BorderSide(
+                color: Colors.blueGrey.shade800.withValues(alpha: 0.6),
+                width: 1.5,
+              ),
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black87,
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
             ],
-          );
-        },
+          ),
+          child: mobileScaffold,
+        ),
       ),
     );
   }
@@ -434,7 +539,7 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
         },
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
             color: isSelected ? color.withValues(alpha: 0.25) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
@@ -449,14 +554,17 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 16, color: isSelected ? color : Colors.white60),
-                  const SizedBox(width: 4),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white60,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 13,
+                  Icon(icon, size: 14, color: isSelected ? color : Colors.white60),
+                  const SizedBox(width: 3),
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.white60,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 11,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -465,8 +573,9 @@ class _MRTCompanionHomeScreenState extends State<MRTCompanionHomeScreen> {
                 subtitle,
                 style: TextStyle(
                   color: isSelected ? color : Colors.white38,
-                  fontSize: 10,
+                  fontSize: 9,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

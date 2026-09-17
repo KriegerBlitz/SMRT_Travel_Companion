@@ -60,6 +60,9 @@ class _LeafletMapWidgetState extends State<LeafletMapWidget>
   void fitBounds(List<LatLng> coords) {}
 
   @override
+  void panToStation(double lat, double lng, {int zoom = 15}) {}
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       height: widget.height,

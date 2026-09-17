@@ -30,6 +30,9 @@ external void _setStationMarkersJS(JSAny stations);
 @JS('leafletBridge.fitBounds')
 external void _fitBoundsJS(JSAny coords);
 
+@JS('leafletBridge.panToStation')
+external void _panToStationJS(double lat, double lng, int zoom);
+
 @JS('JSON.parse')
 external JSAny _jsonParse(String json);
 
@@ -179,6 +182,15 @@ class _LeafletMapWidgetState extends State<LeafletMapWidget>
       _fitBoundsJS(_jsonParse(jsonStr));
     } catch (e) {
       debugPrint('Error in fitBounds: $e');
+    }
+  }
+
+  @override
+  void panToStation(double lat, double lng, {int zoom = 15}) {
+    try {
+      _panToStationJS(lat, lng, zoom);
+    } catch (e) {
+      debugPrint('Error in panToStation: $e');
     }
   }
 

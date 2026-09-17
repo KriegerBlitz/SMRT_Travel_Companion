@@ -98,8 +98,12 @@ class _MdmLimJourneyViewState extends State<MdmLimJourneyView> {
 
               const SizedBox(height: 12),
 
-              // Accessibility Action Row: TTS Readout + Large Text Toggle
-              Row(
+              // Accessibility Action Row: TTS Readout + Large Text Toggle (Wrap for mobile portrait flexibility)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   ElevatedButton.icon(
                     onPressed: () {
@@ -114,7 +118,7 @@ class _MdmLimJourneyViewState extends State<MdmLimJourneyView> {
                     label: Text(
                       'Listen to Audio Advisory (TTS)',
                       style: TextStyle(
-                        fontSize: isLarge ? 15 : 12,
+                        fontSize: isLarge ? 14 : 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -122,12 +126,11 @@ class _MdmLimJourneyViewState extends State<MdmLimJourneyView> {
                       backgroundColor: Colors.purple.shade700,
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(
-                        horizontal: isLarge ? 14 : 10,
-                        vertical: isLarge ? 10 : 6,
+                        horizontal: isLarge ? 12 : 10,
+                        vertical: isLarge ? 8 : 6,
                       ),
                     ),
                   ),
-                  const Spacer(),
                   InkWell(
                     onTap: () => widget.onToggleLargeText(!isLarge),
                     borderRadius: BorderRadius.circular(8),
@@ -286,11 +289,14 @@ class _MdmLimJourneyViewState extends State<MdmLimJourneyView> {
                           const SizedBox(width: 8),
                           const Icon(Icons.accessible, color: Colors.greenAccent, size: 16),
                           const SizedBox(width: 4),
-                          Text(
-                            'WAB (${bus.type})',
-                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          Flexible(
+                            child: Text(
+                              'WAB (${bus.type})',
+                              style: const TextStyle(color: Colors.white70, fontSize: 11),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
@@ -303,17 +309,17 @@ class _MdmLimJourneyViewState extends State<MdmLimJourneyView> {
                               style: TextStyle(
                                 color: bus.loadColor,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 11,
+                                fontSize: 10,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
-                            '${bus.estimatedMinutes} min',
+                            '${bus.estimatedMinutes}m',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                              fontSize: 12,
                             ),
                           ),
                         ],

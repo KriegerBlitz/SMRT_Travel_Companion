@@ -126,30 +126,45 @@ window.leafletBridge = {
       if (stn.crowd === 'high') crowdColor = '#EF4444';
       else if (stn.crowd === 'moderate') crowdColor = '#F59E0B';
 
-      const customHtml = `
-        <div style="position: relative; display: flex; align-items: center; justify-content: center;">
-          <div style="background-color: ${stn.lineColor || '#009645'}; color: #ffffff; border: 2px solid #ffffff; border-radius: 6px; padding: 2px 6px; font-weight: bold; font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); white-space: nowrap;">
-            ${stn.code} ${stn.name}
-          </div>
-          <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${crowdColor}; border: 2px solid #ffffff; margin-left: 4px; box-shadow: 0 0 6px ${crowdColor};" title="Crowd: ${stn.crowd}"></div>
-        </div>
-      `;
-
-      const icon = L.divIcon({
-        html: customHtml,
-        className: 'station-div-icon',
-        iconSize: [140, 24],
-        iconAnchor: [70, 12]
+      const marker = L.circleMarker([stn.lat, stn.lng], {
+        radius: 7,
+        fillColor: stn.lineColor || '#009645',
+        color: '#FFFFFF',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.95
       });
 
-      const marker = L.marker([stn.lat, stn.lng], { icon: icon });
-      let popupContent = `<b>${stn.code} ${stn.name}</b><br/>Line: ${stn.lineName}<br/>Crowd Level: <b style="color:${crowdColor}">${stn.crowd ? stn.crowd.toUpperCase() : 'LOW'}</b>`;
-      if (stn.facilityAlert) {
-        popupContent += `<br/><span style="color:#DC2626;">⚠️ ${stn.facilityAlert}</span>`;
-      }
+      marker.bindTooltip(`<b>${stn.code}</b> ${stn.name}`, {
+        permanent: false,
+        direction: 'top',
+        offset: [0, -6]
+      });
+
+      let popupContent = `
+        <div style="font-family: system-ui, sans-serif; min-width: 160px; padding: 2px;">
+          <div style="font-size: 13px; font-weight: bold; color: #0F172A; border-bottom: 2px solid ${stn.lineColor || '#009645'}; padding-bottom: 4px; margin-bottom: 6px;">
+            ${stn.code} ${stn.name}
+          </div>
+          <div style="font-size: 11px; color: #475569; margin-bottom: 4px;">
+            <b>Line:</b> ${stn.lineName}
+          </div>
+          <div style="font-size: 11px; color: #475569; display: flex; align-items: center; margin-bottom: 4px;">
+            <b style="margin-right: 4px;">Crowd:</b> 
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${crowdColor}; margin-right: 4px;"></span>
+            <span style="font-weight: bold; color: ${crowdColor}; text-transform: uppercase;">${stn.crowd || 'LOW'}</span>
+          </div>
+          ${stn.facilityAlert ? `<div style="margin-top: 4px; padding: 4px 6px; background: #FEE2E2; border: 1px solid #EF4444; border-radius: 4px; font-size: 10px; color: #991B1B; font-weight: bold;">⚠️ ${stn.facilityAlert}</div>` : ''}
+        </div>
+      `;
       marker.bindPopup(popupContent);
       window.leafletBridge.markerLayerGroup.addLayer(marker);
     });
+  },
+
+  panToStation: function (lat, lng, zoom) {
+    if (!this.map) return;
+    this.map.setView([lat, lng], zoom || 15, { animate: true });
   },
 
   fitBounds: function (coords) {

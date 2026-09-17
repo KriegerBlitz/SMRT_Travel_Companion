@@ -79,5 +79,54 @@ void main() {
       expect(seq.any((s) => s.code == 'EW5'), isTrue); // Bedok in between
       expect(seq.length, greaterThanOrEqualTo(10));
     });
+
+    test('verifies all MRT and LRT lines have stations populated in sequence', () {
+      expect(CanonicalLineCodes.stations.length, greaterThan(130));
+
+      // EWL has 35 stations
+      final ewl = CanonicalLineCodes.getStationsForLine(MRTLine.ewl);
+      expect(ewl.length, equals(35));
+      expect(ewl.first.code, equals('EW1'));
+      expect(ewl.any((s) => s.code == 'EW33'), isTrue); // Tuas Link
+
+      // NSL has 27 stations
+      final nsl = CanonicalLineCodes.getStationsForLine(MRTLine.nsl);
+      expect(nsl.length, equals(27));
+      expect(nsl.first.allCodes, contains('NS1')); // Jurong East
+      expect(nsl.any((s) => s.code == 'NS12'), isTrue); // Canberra
+      expect(nsl.last.code, equals('NS28')); // Marina South Pier
+
+      // NEL has 17 stations
+      final nel = CanonicalLineCodes.getStationsForLine(MRTLine.nel);
+      expect(nel.length, equals(17));
+      expect(nel.first.code, equals('NE1'));
+      expect(nel.last.code, equals('NE18')); // Punggol Coast
+
+      // CCL has 30 stations
+      final ccl = CanonicalLineCodes.getStationsForLine(MRTLine.ccl);
+      expect(ccl.length, equals(30));
+
+      // DTL has 34 stations
+      final dtl = CanonicalLineCodes.getStationsForLine(MRTLine.dtl);
+      expect(dtl.length, equals(34));
+      expect(dtl.first.code, equals('DT1'));
+      expect(dtl.last.allCodes, contains('DT35')); // Expo
+
+      // TEL has 27 stations
+      final tel = CanonicalLineCodes.getStationsForLine(MRTLine.tel);
+      expect(tel.length, equals(27));
+      expect(tel.first.code, equals('TE1'));
+      expect(tel.last.code, equals('TE29')); // Bayshore
+
+      // LRT lines populated
+      final bplrt = CanonicalLineCodes.getStationsForLine(MRTLine.bplrt);
+      expect(bplrt.length, equals(13));
+
+      final slrt = CanonicalLineCodes.getStationsForLine(MRTLine.slrt);
+      expect(slrt.length, equals(14));
+
+      final plrt = CanonicalLineCodes.getStationsForLine(MRTLine.plrt);
+      expect(plrt.length, equals(15));
+    });
   });
 }

@@ -120,7 +120,10 @@ class RachelJourneyView extends StatelessWidget {
                       ),
                       if (alert.freeMrtShuttle) ...[
                         const SizedBox(height: 6),
-                        Row(
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -137,7 +140,6 @@ class RachelJourneyView extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
                             const Text(
                               'Available at Tampines Bus Int Bay 8',
                               style: TextStyle(color: Colors.white70, fontSize: 11),
@@ -204,15 +206,27 @@ class RachelJourneyView extends StatelessWidget {
                       color: !showAlternative ? const Color(0xFF009645) : Colors.blueGrey,
                       width: 1.5,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   ),
-                  child: Text(
-                    'Original Route (${currentRoute.totalMinutes} min)',
-                    style: TextStyle(
-                      color: !showAlternative ? Colors.white : Colors.white60,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Original Route',
+                        style: TextStyle(
+                          color: !showAlternative ? Colors.white : Colors.white60,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '${currentRoute.totalMinutes} min · EWL',
+                        style: TextStyle(
+                          color: !showAlternative ? const Color(0xFF86EFAC) : Colors.white38,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -228,15 +242,27 @@ class RachelJourneyView extends StatelessWidget {
                       color: showAlternative ? const Color(0xFF0284C7) : Colors.blueGrey,
                       width: 1.5,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   ),
-                  child: Text(
-                    'Mitigation Shuttle (${alternativeRoute!.totalMinutes} min)',
-                    style: TextStyle(
-                      color: showAlternative ? Colors.white : Colors.white60,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Mitigation Shuttle',
+                        style: TextStyle(
+                          color: showAlternative ? Colors.white : Colors.white60,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '${alternativeRoute!.totalMinutes} min · Free Bus',
+                        style: TextStyle(
+                          color: showAlternative ? Colors.cyanAccent : Colors.white38,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
