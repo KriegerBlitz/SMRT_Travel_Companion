@@ -42,6 +42,22 @@ class DebugService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Toggles Debug Mode and returns the new state.
+  bool toggleDebugMode() {
+    setDebugMode(!_isDebugMode);
+    return _isDebugMode;
+  }
+
+  /// Disables Debug Mode and resets all simulation switches.
+  void disableDebugMode() {
+    setDebugMode(false);
+  }
+
+  /// Enables Debug Mode.
+  void enableDebugMode() {
+    setDebugMode(true);
+  }
+
   /// Toggles simulated train service disruption (EWL signalling fault + Free MRT Shuttle).
   void setSimulateDisruption(bool value) {
     if (!_isDebugMode) return;
