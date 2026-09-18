@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:travelcompanion/core/services/natural_language_route_service.dart';
 import 'package:travelcompanion/features/home/home_screen.dart';
+import 'package:travelcompanion/features/journey/journey_screen.dart';
+import 'package:travelcompanion/features/journey/widgets/transit_journey_diagram.dart';
 
 void main() {
   group('HomeScreen Widget Tests', () {
@@ -58,17 +59,11 @@ void main() {
     });
 
     testWidgets(
-        'Tapping [->] arrow triggers route planner and displays route preview card with ETA',
+        'Tapping [->] arrow redirects to JourneyScreen with ETA and transit diagram',
         (tester) async {
-      ParsedJourneyResult? receivedResult;
-
       await tester.pumpWidget(
-        MaterialApp(
-          home: HomeScreen(
-            onNavigateToJourney: (result) {
-              receivedResult = result;
-            },
-          ),
+        const MaterialApp(
+          home: HomeScreen(),
         ),
       );
       await tester.pump();
@@ -80,17 +75,13 @@ void main() {
 
       await tester.tap(planButton);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 800));
 
-      // Verify route was planned and preview card appears
-      expect(find.textContaining('Bugis ➔ HarbourFront'), findsOneWidget);
-      expect(find.textContaining('ETA'), findsOneWidget);
-      expect(find.text('Wheelchair / Barrier-Free'), findsOneWidget);
-      expect(find.textContaining('Journey logic planned'), findsOneWidget);
-      expect(receivedResult, isNotNull);
-      expect(receivedResult!.origin, 'Bugis');
-      expect(receivedResult!.destination, 'HarbourFront');
-      expect(receivedResult!.isWheelchairAccessible, isTrue);
+      // Verify redirection to JourneyScreen
+      expect(find.byType(JourneyScreen), findsOneWidget);
+      expect(find.textContaining('mins ETA'), findsOneWidget);
+      expect(find.text('ROUTE TIMELINE'), findsOneWidget);
+      expect(find.byType(TransitJourneyDiagram), findsOneWidget);
     });
 
     testWidgets('Map floating buttons respond to tap gestures', (tester) async {

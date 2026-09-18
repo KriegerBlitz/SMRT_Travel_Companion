@@ -7,11 +7,13 @@ import '../../../core/services/natural_language_route_service.dart';
 class RoutePreviewSheet extends StatelessWidget {
   final ParsedJourneyResult result;
   final VoidCallback? onDismiss;
+  final VoidCallback? onViewJourney;
 
   const RoutePreviewSheet({
     super.key,
     required this.result,
     this.onDismiss,
+    this.onViewJourney,
   });
 
   @override
@@ -127,32 +129,42 @@ class RoutePreviewSheet extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // Deferral Notice / Hand-off Banner
-          // TODO: Replace with full journey page once implemented.
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  color: Colors.white.withValues(alpha: 0.6),
-                  size: 14,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Journey logic planned. Full journey page will be implemented next!',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white.withValues(alpha: 0.65),
-                      fontSize: 11,
-                    ),
+          // Hand-off Banner to Full Journey Diagram
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onViewJourney,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.16),
                   ),
                 ),
-              ],
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.alt_route_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'View Full Journey Diagram & Station Stops →',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

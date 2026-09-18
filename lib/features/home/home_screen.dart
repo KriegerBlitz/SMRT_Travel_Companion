@@ -12,6 +12,7 @@ import 'widgets/map_touch_controls.dart';
 import 'widgets/route_preview_sheet.dart';
 import 'widgets/route_search_bar.dart';
 import 'widgets/weather_forecast_bar.dart';
+import '../journey/journey_screen.dart';
 
 /// Home Screen: Orchestrates live Leaflet map with natural language routing,
 /// real-time weather forecast, and debug simulation harness.
@@ -139,29 +140,25 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     _focusNode.unfocus();
-    setState(() {
-      _isPlanningRoute = true;
-    });
 
-    try {
-      final result = await _routeService.interpretAndPlanRoute(query);
+    // Plan and render route on Home map for when user returns
+    _routeService.interpretAndPlanRoute(query).then((result) {
       if (mounted) {
         setState(() {
           _lastPlannedResult = result;
           _isPlanningRoute = false;
         });
-
-        // Render planned route on Leaflet Map
         _renderRouteOnMap(result.routePlan);
-
-        // Notify parent if journey listener attached (for future Journey Page navigation)
         widget.onNavigateToJourney?.call(result);
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isPlanningRoute = false);
-      }
-    }
+    }).catchError((_) {});
+
+    // Redirect to Journey Page as requested
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => JourneyScreen(initialQuery: query),
+      ),
+    );
   }
 
   void _renderRouteOnMap(RoutePlan plan) {
@@ -310,7 +307,18 @@ class _HomeScreenState extends State<HomeScreen>
                 _buildPlanningLoader(),
               ] else if (_lastPlannedResult != null) ...[
                 const SizedBox(height: 12),
-                RoutePreviewSheet(result: _lastPlannedResult!),
+                RoutePreviewSheet(
+                  result: _lastPlannedResult!,
+                  onViewJourney: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => JourneyScreen(
+                          initialQuery: _lastPlannedResult!.rawQuery,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ],
             ],
           ),
