@@ -172,6 +172,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final controlsBottom = (_lastPlannedResult != null ? 350.0 : 160.0) + bottomPadding;
+
     return Scaffold(
       backgroundColor: Colors.black,
       resizeToAvoidBottomInset: false,
@@ -189,16 +192,19 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
-          // 2. Top Floating Brand Header & Status Pill
+          // 2. Top Floating Brand Header
           const HomeBrandHeader(),
 
           // 3. Debug Overlay Panel (Only visible when unlocked via Konami Code)
           const DebugOverlayPanel(),
 
           // 4. Floating Touch Controls on Map (Zoom In, Zoom Out, Recenter)
-          Positioned(
+          // Positioned near the bottom container, smoothly adapting when routes expand
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
             right: 16,
-            top: 100,
+            bottom: controlsBottom,
             child: SlideTransition(
               position: _controlsSlideAnimation,
               child: FadeTransition(

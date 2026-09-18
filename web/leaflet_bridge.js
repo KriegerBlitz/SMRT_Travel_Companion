@@ -28,7 +28,7 @@
       const map = L.map(containerId, {
         center: [defaultLat, defaultLng],
         zoom: defaultZoom,
-        zoomControl: true,
+        zoomControl: false, // Disabled: using custom sleek Flutter MapTouchControls
         attributionControl: true,
       });
 
