@@ -73,6 +73,8 @@ class RoutePlan {
   final String destination;
   final int totalDurationMinutes;
   final double totalWalkDistanceMeters;
+  final String title;
+  final String? badge;
   final List<RouteLeg> legs;
   final bool isRerouted;
   final String? rerouteReason;
@@ -90,6 +92,8 @@ class RoutePlan {
     required this.destination,
     required this.totalDurationMinutes,
     this.totalWalkDistanceMeters = 0.0,
+    this.title = 'Fastest Transit Route',
+    this.badge,
     required this.legs,
     this.isRerouted = false,
     this.rerouteReason,
@@ -101,6 +105,48 @@ class RoutePlan {
     this.stationCrowds = const {},
     this.isSimulated = false,
   });
+
+  RoutePlan copyWith({
+    String? id,
+    String? origin,
+    String? destination,
+    int? totalDurationMinutes,
+    double? totalWalkDistanceMeters,
+    String? title,
+    String? badge,
+    List<RouteLeg>? legs,
+    bool? isRerouted,
+    String? rerouteReason,
+    ConfidenceLevel? confidence,
+    String? confidenceReason,
+    bool? hasRainRisk,
+    bool? usesShelteredWalkways,
+    RoutePlan? alternativeRoute,
+    Map<String, CrowdLevel>? stationCrowds,
+    bool? isSimulated,
+  }) {
+    return RoutePlan(
+      id: id ?? this.id,
+      origin: origin ?? this.origin,
+      destination: destination ?? this.destination,
+      totalDurationMinutes: totalDurationMinutes ?? this.totalDurationMinutes,
+      totalWalkDistanceMeters:
+          totalWalkDistanceMeters ?? this.totalWalkDistanceMeters,
+      title: title ?? this.title,
+      badge: badge ?? this.badge,
+      legs: legs ?? this.legs,
+      isRerouted: isRerouted ?? this.isRerouted,
+      rerouteReason: rerouteReason ?? this.rerouteReason,
+      confidence: confidence ?? this.confidence,
+      confidenceReason: confidenceReason ?? this.confidenceReason,
+      hasRainRisk: hasRainRisk ?? this.hasRainRisk,
+      usesShelteredWalkways:
+          usesShelteredWalkways ?? this.usesShelteredWalkways,
+      alternativeRoute: alternativeRoute ?? this.alternativeRoute,
+      stationCrowds: stationCrowds ?? this.stationCrowds,
+      isSimulated: isSimulated ?? this.isSimulated,
+    );
+  }
 
   /// Realistic ETA band with confidence interval instead of a single fake-precise number
   String get etaBand {

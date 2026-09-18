@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/crowd_density.dart';
 import '../../../core/models/route_plan.dart';
-import '../../../core/services/natural_language_route_service.dart';
 import 'confidence_details_sheet.dart';
 import 'side_by_side_route_card.dart';
 
@@ -10,20 +9,21 @@ import 'side_by_side_route_card.dart';
 /// station crowd density indicators, and side-by-side disruption comparison.
 /// Fulfills PS2 requirements 1.1, 1.2, and 1.3.
 class RoutePreviewSheet extends StatelessWidget {
-  final ParsedJourneyResult result;
+  final RoutePlan plan;
+  final bool isWheelchairAccessible;
   final VoidCallback? onDismiss;
   final ValueChanged<bool>? onToggleRouteDisplay;
 
   const RoutePreviewSheet({
     super.key,
-    required this.result,
+    required this.plan,
+    this.isWheelchairAccessible = false,
     this.onDismiss,
     this.onToggleRouteDisplay,
   });
 
   @override
   Widget build(BuildContext context) {
-    final plan = result.routePlan;
     final isRerouted = plan.isRerouted && plan.alternativeRoute != null;
 
     return Container(
@@ -48,7 +48,7 @@ class RoutePreviewSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${result.origin} ➔ ${result.destination}',
+                  '${plan.origin} ➔ ${plan.destination}',
                   style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
                     fontSize: 14.5,
@@ -115,7 +115,7 @@ class RoutePreviewSheet extends StatelessWidget {
                   isInteractive: true,
                 ),
               ),
-              if (result.isWheelchairAccessible)
+              if (isWheelchairAccessible)
                 _buildTag(
                   icon: Icons.accessible_rounded,
                   label: 'Wheelchair / Barrier-Free',
