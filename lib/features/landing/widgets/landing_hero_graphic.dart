@@ -14,10 +14,7 @@ class LandingHeroGraphic extends StatelessWidget {
   /// Optional path to a future custom Canva asset (defaults to 'assets/data/NEXT.svg')
   final String? customAssetPath;
 
-  const LandingHeroGraphic({
-    super.key,
-    this.customAssetPath,
-  });
+  const LandingHeroGraphic({super.key, this.customAssetPath});
 
   static const String _defaultSvgPath = 'assets/NEXT.svg';
 
@@ -28,7 +25,7 @@ class LandingHeroGraphic extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Transform.scale(
-        scale: 1.10,
+        scale: 1.05,
         alignment: Alignment.bottomCenter,
         child: SvgPicture.asset(
           assetPath,
@@ -65,31 +62,31 @@ class DefaultLandingTypography extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-              Text(
-                'Where',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 54,
-                  fontWeight: FontWeight.w700,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.white,
-                  letterSpacing: -1.2,
-                  height: 0.95,
+                Text(
+                  'Where',
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 54,
+                    fontWeight: FontWeight.w700,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white,
+                    letterSpacing: -1.2,
+                    height: 0.95,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Text(
-                'to',
-                style: GoogleFonts.greatVibes(
-                  fontSize: 56,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.white,
-                  height: 0.95,
+                const SizedBox(width: 14),
+                Text(
+                  'to',
+                  style: GoogleFonts.greatVibes(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white,
+                    height: 0.95,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
 
         // Tightly stacked "NEXT?" in ultra-tall Bebas Neue font, bold, full width
         Transform.translate(
