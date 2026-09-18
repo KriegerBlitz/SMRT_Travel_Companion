@@ -191,6 +191,61 @@ class TransitRoutingEngine {
     );
   }
 
+  /// Plans multiple candidate journey options (MRT, Bus, Step-Free / Sheltered).
+  Future<List<RoutePlan>> planCommuterJourneyOptions({
+    required String originName,
+    required double startLat,
+    required double startLon,
+    required String destinationName,
+    required double endLat,
+    required double endLon,
+    required String persona,
+    bool simulateDisruption = false,
+    bool simulateLiftOutage = false,
+    bool simulateRain = false,
+    bool forceHighCrowd = false,
+  }) async {
+    // 1. Primary route through evaluation pipeline
+    final primary = await planCommuterJourney(
+      originName: originName,
+      startLat: startLat,
+      startLon: startLon,
+      destinationName: destinationName,
+      endLat: endLat,
+      endLon: endLon,
+      persona: persona,
+      simulateDisruption: simulateDisruption,
+      simulateLiftOutage: simulateLiftOutage,
+      simulateRain: simulateRain,
+      forceHighCrowd: forceHighCrowd,
+    );
+
+    // 2. Fetch multi-modal candidate options from OneMap service
+    final rawOptions = _oneMapService.getRealisticMultiModalOptions(
+      originName: originName,
+      startLat: startLat,
+      startLon: startLon,
+      destinationName: destinationName,
+      endLat: endLat,
+      endLon: endLon,
+      preferSheltered: primary.usesShelteredWalkways,
+    );
+
+    // If primary was rerouted due to disruption or lift outage, include primary first
+    if (primary.isRerouted) {
+      return [primary, ...rawOptions.where((o) => o.id != primary.id)];
+    }
+
+    final result = <RoutePlan>[];
+    result.add(primary);
+    for (final opt in rawOptions) {
+      if (opt.id != primary.id && !result.any((r) => r.id == opt.id || r.title == opt.title)) {
+        result.add(opt);
+      }
+    }
+    return result;
+  }
+
   /// Builds a rerouted journey using official LTA mitigation services
   /// (Free MRT Shuttle / Free Public Bus) shown side-by-side with original route.
   RoutePlan _buildDisruptionMitigationRoute({

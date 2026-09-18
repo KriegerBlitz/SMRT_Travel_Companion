@@ -11,10 +11,12 @@ import '../../../core/models/journey_diagram_data.dart';
 /// - Multi-modal connections (Walking / Free MRT Shuttle) styled with distinct indicators.
 class TransitJourneyDiagram extends StatelessWidget {
   final JourneyDiagramData diagramData;
+  final String? activeStationName;
 
   const TransitJourneyDiagram({
     super.key,
     required this.diagramData,
+    this.activeStationName,
   });
 
   @override
@@ -141,6 +143,12 @@ class TransitJourneyDiagram extends StatelessWidget {
     required bool isLastInSegment,
   }) {
     final isImportant = node.isImportant;
+    final cleanActive = activeStationName?.trim().toLowerCase();
+    final isActive = cleanActive != null &&
+        cleanActive.isNotEmpty &&
+        (node.name.toLowerCase().contains(cleanActive) ||
+            cleanActive.contains(node.name.toLowerCase()) ||
+            (node.code != null && node.code!.toLowerCase() == cleanActive));
 
     return IntrinsicHeight(
       child: Row(
@@ -163,7 +171,34 @@ class TransitJourneyDiagram extends StatelessWidget {
                 ),
 
                 // Station Dot
-                if (isImportant)
+                if (isActive)
+                  // Active pulsing beacon dot for current live navigation stop
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF00E5FF),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00E5FF).withValues(alpha: 0.65),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                else if (isImportant)
                   // BIGGER dot for important stations (Origin, Interchange/Transfer, Destination)
                   Container(
                     width: 22,
@@ -237,6 +272,28 @@ class TransitJourneyDiagram extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+
+                      // "YOU ARE HERE" Beacon Badge
+                      if (isActive) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00E5FF).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0xFF00E5FF), width: 1),
+                          ),
+                          child: Text(
+                            'CURRENT STOP',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: const Color(0xFF00E5FF),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
 
                       // Station Code Badge
                       if (node.code != null && node.code!.isNotEmpty) ...[

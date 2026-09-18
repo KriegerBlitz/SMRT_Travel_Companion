@@ -71,6 +71,8 @@ class RoutePlan {
   final String? rerouteReason;
   final ConfidenceLevel confidence;
   final String confidenceReason;
+  final String title;
+  final String? badge;
   final bool hasRainRisk;
   final bool usesShelteredWalkways;
   final RoutePlan? alternativeRoute; // Shown side-by-side
@@ -87,11 +89,27 @@ class RoutePlan {
     this.rerouteReason,
     this.confidence = ConfidenceLevel.green,
     required this.confidenceReason,
+    this.title = 'Fastest Transit Route',
+    this.badge,
     this.hasRainRisk = false,
     this.usesShelteredWalkways = false,
     this.alternativeRoute,
     this.isSimulated = false,
   });
+
+  /// True if route includes any bus or shuttle segment
+  bool get hasBus => legs.any((l) => l.mode == 'BUS' || l.mode == 'SHUTTLE');
+
+  /// True if route includes any subway/MRT train segment
+  bool get hasMrt => legs.any((l) => l.mode == 'SUBWAY');
+
+  /// Human-readable travel mode summary
+  String get modeSummary {
+    if (hasMrt && hasBus) return 'MRT + BUS';
+    if (hasBus) return 'BUS ONLY';
+    if (hasMrt) return 'MRT ONLY';
+    return 'WALK';
+  }
 
   /// All transit lines used in this route
   List<String> get transitLinesUsed => legs

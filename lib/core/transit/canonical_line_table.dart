@@ -310,6 +310,32 @@ class CanonicalLineTable {
         .toList();
   }
 
+  /// Resolves a station by exact station code (e.g. EW28, NS24, DT14) or station name
+  static Station? findStationByCodeOrName(String query) {
+    final clean = query.trim();
+    if (clean.isEmpty) return null;
+    final upper = clean.toUpperCase();
+
+    // 1. Direct station code match (e.g. EW28, DT14, NE1, CC19)
+    for (final s in allStations) {
+      if (s.matchesCode(upper)) return s;
+    }
+
+    // 2. Exact station name match (case-insensitive)
+    final lower = clean.toLowerCase();
+    for (final s in allStations) {
+      if (s.name.toLowerCase() == lower) return s;
+    }
+
+    // 3. Substring match
+    for (final s in allStations) {
+      if (s.name.toLowerCase().contains(lower) || lower.contains(s.name.toLowerCase())) {
+        return s;
+      }
+    }
+    return null;
+  }
+
   // ---------------------------------------------------------------------------
   // Pre-mapped Singapore MRT / LRT Stations
   // ---------------------------------------------------------------------------

@@ -11,6 +11,7 @@ class ParsedJourneyResult {
   final String persona; // 'mdmLim', 'rachel', or 'general'
   final bool isWheelchairAccessible;
   final RoutePlan routePlan;
+  final List<RoutePlan> allOptions;
   final WeatherForecastResult weather;
 
   const ParsedJourneyResult({
@@ -20,13 +21,14 @@ class ParsedJourneyResult {
     required this.persona,
     required this.isWheelchairAccessible,
     required this.routePlan,
+    this.allOptions = const [],
     required this.weather,
   });
 
   String get etaDisplay => '${routePlan.totalDurationMinutes} mins';
 }
 
-/// Service that parses natural language transit prompts (e.g. "Bugis to Harborfront on Wheelchair")
+/// Service that parses natural language transit prompts (e.g. "Bugis to Harborfront on Wheelchair", "EW28 to NS24")
 /// and executes intelligent door-to-door multi-modal route planning.
 class NaturalLanguageRouteService {
   final TransitRoutingEngine _engine;
@@ -58,12 +60,41 @@ class NaturalLanguageRouteService {
 
     final persona = isWheelchair ? 'mdmLim' : (isRachel ? 'rachel' : 'general');
 
-    // 2. Extract Origin and Destination
+    // 2. Extract Origin and Destination (Station Codes or Station Names)
     String origin = 'Bugis';
     String destination = 'HarbourFront';
 
-    if (lower.contains(' to ')) {
-      final parts = lower.split(' to ');
+    // Check if query contains station codes like EW28, NS24, DT14, NE1, CC19, TE20
+    final codeMatches = RegExp(r'\b([A-Za-z]{2,4}\s*\d{1,2})\b')
+        .allMatches(query)
+        .map((m) => m.group(1)!.replaceAll(' ', '').toUpperCase())
+        .where((code) => CanonicalLineTable.findStationByCodeOrName(code) != null)
+        .toList();
+
+    if (codeMatches.length >= 2) {
+      final s1 = CanonicalLineTable.findStationByCodeOrName(codeMatches[0])!;
+      final s2 = CanonicalLineTable.findStationByCodeOrName(codeMatches[1])!;
+      origin = s1.name;
+      destination = s2.name;
+    } else if (codeMatches.length == 1 && (lower.contains(' to ') || lower.contains(' from '))) {
+      // One station code and one location name
+      final codeStation = CanonicalLineTable.findStationByCodeOrName(codeMatches.first)!;
+      if (lower.startsWith('from') || lower.indexOf(codeMatches.first.toLowerCase()) < lower.indexOf('to')) {
+        origin = codeStation.name;
+        final parts = lower.split(' to ');
+        if (parts.length > 1) {
+          destination = _cleanLocationName(parts[1], defaultVal: 'HarbourFront');
+        }
+      } else {
+        destination = codeStation.name;
+        final parts = lower.split(' to ');
+        origin = _cleanLocationName(parts[0].replaceAll('from', ''), defaultVal: 'Bugis');
+      }
+    } else if (lower.contains(' to ') || lower.contains(' -> ') || lower.contains(' towards ')) {
+      final separator = lower.contains(' -> ')
+          ? ' -> '
+          : (lower.contains(' towards ') ? ' towards ' : ' to ');
+      final parts = lower.split(separator);
       var rawOrigin = parts[0].replaceAll('from', '').trim();
       var rawDest = parts[1];
 
@@ -74,10 +105,17 @@ class NaturalLanguageRouteService {
           .replaceAll('wheelchair', '')
           .replaceAll('please', '')
           .replaceAll('by mrt', '')
+          .replaceAll('by bus', '')
           .trim();
 
       origin = _cleanLocationName(rawOrigin, defaultVal: 'Bugis');
       destination = _cleanLocationName(rawDest, defaultVal: 'HarbourFront');
+    } else {
+      // Check if single location or station code matches
+      final s = CanonicalLineTable.findStationByCodeOrName(query);
+      if (s != null) {
+        destination = s.name;
+      }
     }
 
     // 3. Resolve Coordinates via Canonical Line Table or Singapore Defaults
@@ -92,8 +130,8 @@ class NaturalLanguageRouteService {
     // 4. Fetch Weather Nowcast for Origin/City
     final weather = await _weatherService.checkRainNowcast(area: origin);
 
-    // 5. Plan Multi-Modal Journey through Routing Engine
-    final plan = await _engine.planCommuterJourney(
+    // 5. Plan Multi-Modal Journey Options through Routing Engine
+    final allOptions = await _engine.planCommuterJourneyOptions(
       originName: origin,
       startLat: startLat,
       startLon: startLon,
@@ -103,38 +141,54 @@ class NaturalLanguageRouteService {
       persona: persona,
     );
 
+    final primaryPlan = allOptions.isNotEmpty
+        ? allOptions.first
+        : await _engine.planCommuterJourney(
+            originName: origin,
+            startLat: startLat,
+            startLon: startLon,
+            destinationName: destination,
+            endLat: endLat,
+            endLon: endLon,
+            persona: persona,
+          );
+
     return ParsedJourneyResult(
       rawQuery: query,
       origin: origin,
       destination: destination,
       persona: persona,
       isWheelchairAccessible: isWheelchair,
-      routePlan: plan,
+      routePlan: primaryPlan,
+      allOptions: allOptions.isNotEmpty ? allOptions : [primaryPlan],
       weather: weather,
     );
   }
 
   String _cleanLocationName(String input, {required String defaultVal}) {
     if (input.isEmpty) return defaultVal;
+
+    // Check station code or exact station name match first (e.g. EW28 -> Pioneer)
+    final matchedStation = CanonicalLineTable.findStationByCodeOrName(input);
+    if (matchedStation != null) {
+      return matchedStation.name;
+    }
+
     // Normalize well-known variations
-    final clean = input.toLowerCase();
+    final clean = input.toLowerCase().trim();
     if (clean.contains('harbor') || clean.contains('harbour')) return 'HarbourFront';
     if (clean.contains('bugis')) return 'Bugis';
     if (clean.contains('tampines')) return 'Tampines';
     if (clean.contains('raffles')) return 'Raffles Place';
     if (clean.contains('bedok')) return 'Bedok';
     if (clean.contains('outram')) return 'Outram Park';
+    if (clean.contains('pioneer')) return 'Pioneer';
+    if (clean.contains('jurong')) return 'Jurong East';
     if (clean.contains('sgh') || clean.contains('hospital')) return 'Singapore General Hospital';
     return input[0].toUpperCase() + input.substring(1);
   }
 
   Station? _findStation(String name) {
-    final q = name.toLowerCase();
-    for (final s in CanonicalLineTable.allStations) {
-      if (s.name.toLowerCase().contains(q) || q.contains(s.name.toLowerCase())) {
-        return s;
-      }
-    }
-    return null;
+    return CanonicalLineTable.findStationByCodeOrName(name);
   }
 }

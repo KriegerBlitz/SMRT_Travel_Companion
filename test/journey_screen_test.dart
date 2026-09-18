@@ -101,6 +101,66 @@ void main() {
       expect(find.byType(TransitJourneyDiagram), findsOneWidget);
     });
 
+    testWidgets('supports station codes like EW28 to NS24 and renders travel options',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: JourneyScreen(
+            initialQuery: 'EW28 to NS24',
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Check origin Pioneer (EW28) and destination Dhoby Ghaut (NS24)
+      expect(find.text('Pioneer'), findsWidgets);
+      expect(find.text('Dhoby Ghaut'), findsWidgets);
+
+      // Travel options section rendered
+      expect(find.text('TRAVEL METHODS & ALTERNATIVES'), findsOneWidget);
+      expect(find.textContaining('Begin Journey'), findsOneWidget);
+    });
+
+    testWidgets('tapping Begin Journey starts live navigation HUD and advance stop works',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: JourneyScreen(
+            initialQuery: 'EW28 to NS24',
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Tap Begin Journey
+      final beginBtn = find.textContaining('Begin Journey');
+      expect(beginBtn, findsOneWidget);
+      await tester.tap(beginBtn);
+      await tester.pump();
+
+      // Live Navigation HUD active
+      expect(find.text('LIVE NAVIGATION'), findsOneWidget);
+      expect(find.textContaining('min left'), findsOneWidget);
+      expect(find.text('Advance Stop'), findsOneWidget);
+      expect(find.text('End Trip'), findsOneWidget);
+
+      // Tap Advance Stop
+      await tester.tap(find.text('Advance Stop'));
+      await tester.pump();
+
+      // Tap End Trip
+      await tester.tap(find.text('End Trip'));
+      await tester.pump();
+
+      // Returned to route overview
+      expect(find.text('LIVE NAVIGATION'), findsNothing);
+      expect(find.textContaining('Begin Journey'), findsOneWidget);
+    });
+
     testWidgets('back button pops screen and returns to previous route',
         (tester) async {
       await tester.pumpWidget(
@@ -140,3 +200,4 @@ void main() {
     });
   });
 }
+
