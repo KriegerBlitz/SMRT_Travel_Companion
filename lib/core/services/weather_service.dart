@@ -33,7 +33,8 @@ class WeatherService {
       final response = await _client.get(Uri.parse(ApiConfig.weatherTwoHourForecast));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final items = data['items'] as List<dynamic>? ?? [];
+        final dataObj = data['data'] as Map<String, dynamic>? ?? data;
+        final items = dataObj['items'] as List<dynamic>? ?? [];
         if (items.isNotEmpty) {
           final forecasts = items[0]['forecasts'] as List<dynamic>? ?? [];
           for (final f in forecasts) {
