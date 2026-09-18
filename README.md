@@ -164,15 +164,50 @@ flutter build web --release
 
 ## 📋 Pending Features & Roadmap (For Reference)
 
-1. **Pull-Out / Expandable Bottom Sheet**:
-   - Add interactive vertical drag/pull-out gesture support to the bottom container (indicated by the top grab handle pill).
-   - Allows commuters to smoothly pull up the panel into a full-height sheet showing comprehensive turn-by-turn instructions, alternate routes, and live station crowd breakdown, or slide down to view the full unencumbered live map.
-2. **Dedicated Journey Page**:
-   - Implement the full-screen multi-modal Journey Page receiving the planned route from the natural language search box (`NaturalLanguageRouteService`).
-   - Displays real-time step-by-step guidance, transfer countdown timers, step-free lift navigation, and proactive reroute alerts with side-by-side comparison.
-3. **Dead-Reckoning Underground Navigation**:
-   - Implement step/timer-based dead-reckoning simulation for underground MRT platforms where GPS/cellular signals degrade, maintaining commuter location tracking.
-4. **Custom Canva Hero Typography Asset**:
+### 1. Interactive UI & Bottom Sheet
+1. **Interactive Pull-Out / Draggable Bottom Sheet**:
+   - Add vertical drag gesture physics to the bottom container (currently indicated by the top grab handle pill).
+   - Three snap stops: Collapsed (140px peek), Half-screen (450px route overview), and Full-height (85% comprehensive turn-by-turn guidance).
+   - Allows commuters to view full transit details or slide down to enjoy an unencumbered view of the live Leaflet map.
+2. **Interactive Map Station Popups Wired to Search**:
+   - Connect Leaflet popup *"From here"* and *"To here"* buttons back into Flutter state.
+   - Automatically populates the natural language search bar (e.g., *"From Tampines to Raffles Place"*) and triggers the route planner directly from map taps.
+
+---
+
+### 2. Dedicated Journey & Navigation Page
+3. **Full-Screen Multi-Modal Journey View**:
+   - Transition from the quick `RoutePreviewSheet` on Home to a dedicated Journey Page.
+   - Step-by-step guidance covering each leg: origin walking with distance, train platform and line badges, step-free transfer instructions, connecting bus/shuttle legs, and destination walking.
+4. **Side-by-Side Disruption Comparison Card**:
+   - Visual side-by-side comparison card showing the original delayed route (e.g., stalled on EWL, +25 min delay) alongside the suggested mitigation alternative (Free MRT Shuttle or Circle Line).
+   - Single-line plain-English explanation of why the reroute was chosen.
+5. **Dead-Reckoning Underground Navigation Mode**:
+   - When entering underground MRT tunnels (where GPS and cellular connectivity drop), trigger dead-reckoning navigation using canonical transit run-time schedules.
+   - Displays station countdown timers and upcoming station prompts so commuters never miss their transfer even while disconnected.
+
+---
+
+### 3. Station Deep-Dive & Real-Time Data Cards
+6. **Live Station Inspection Sheet**:
+   - Tapping an MRT station marker reveals a rich data card with:
+     * **Platform Crowding (`PCDRealTime` & `PCDForecast`)**: Current green/amber/red crowding levels plus the 30-minute predictive trend.
+     * **Lift Operational Status (`FacilitiesMaintenance`)**: Live list of station lifts and maintenance outages.
+     * **Connecting Bus Arrivals (`BusArrival`)**: Real-time arrival countdowns, passenger load (`SEA`/`SDA`/`LSD`), and wheelchair accessibility (`WAB`).
+
+---
+
+### 4. Persona Quick-Demo Switcher (For Competition Judges)
+7. **1-Tap Persona Scenario Selector**:
+   - Quick-launch chips on the interface allowing judges to immediately test the two primary personas:
+     * **Rachel's Commute**: Tampines $\rightarrow$ Raffles Place (triggers EWL disruption scenario $\rightarrow$ Free Shuttle alternative $\rightarrow$ crowd forecast).
+     * **Mdm Lim's Journey**: Bedok $\rightarrow$ SGH Outram Park (triggers step-free wheelchair routing $\rightarrow$ Exit 7 lift outage alert $\rightarrow$ Bus 197 WAB alternative $\rightarrow$ covered walkway for rain).
+
+---
+
+### 5. Assets
+8. **Custom Canva Hero Typography Asset**:
    - Replace the current landing page typography component ([`LandingHeroGraphic`](lib/features/landing/widgets/landing_hero_graphic.dart)) with the custom Canva graphic once exported.
+
 
 
