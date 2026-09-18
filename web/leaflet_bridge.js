@@ -386,6 +386,47 @@
     },
 
     /**
+     * Renders station crowd indicators (Green/Amber/Red rings) on stations
+     */
+    renderStationCrowds: function (containerId, crowdsMap) {
+      const map = mapInstances[containerId];
+      const layers = routeLayers[containerId];
+      if (!map || !layers || !crowdsMap) return;
+
+      const stationsList = (window.MRT_ALL_STATIONS && window.MRT_ALL_STATIONS.length > 0)
+        ? window.MRT_ALL_STATIONS
+        : MRT_STATIONS_FALLBACK;
+
+      stationsList.forEach((stn) => {
+        const rawLvl = crowdsMap[stn.code] || (stn.codes && stn.codes.find(c => crowdsMap[c])) ? (crowdsMap[stn.code] || crowdsMap[stn.codes.find(c => crowdsMap[c])]) : null;
+        if (!rawLvl || rawLvl === 'na' || rawLvl === 'NA') return;
+
+        let color = '#10b981'; // green
+        let label = 'Low Crowd';
+        if (rawLvl === 'm' || rawLvl === 'moderate') {
+          color = '#f59e0b'; // amber
+          label = 'Moderate Crowd';
+        } else if (rawLvl === 'h' || rawLvl === 'high') {
+          color = '#ef4444'; // red
+          label = 'High Platform Surge';
+        }
+
+        const crowdMarker = L.circleMarker([stn.lat, stn.lon], {
+          radius: 12,
+          color: color,
+          weight: 3,
+          fillColor: color,
+          fillOpacity: 0.25,
+        }).addTo(layers);
+
+        crowdMarker.bindTooltip(`<b>${stn.name}</b><br><span style="color:${color}; font-weight:bold;">${label}</span>`, {
+          sticky: true,
+          opacity: 0.95,
+        });
+      });
+    },
+
+    /**
      * Triggers map resize update
      */
     invalidateSize: function (containerId) {

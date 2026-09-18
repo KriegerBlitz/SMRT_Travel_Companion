@@ -90,6 +90,17 @@ class LeafletMapController {
     } catch (_) {}
   }
 
+  /// Renders station crowd indicators (Green/Amber/Red rings)
+  void renderStationCrowds(Map<String, dynamic> crowds) {
+    final id = _containerId;
+    if (id == null || !kIsWeb) return;
+    try {
+      final mapped = crowds.map((k, v) => MapEntry(k, v is Enum ? v.name : v.toString()));
+      final jsonStr = jsonEncode(mapped);
+      platform.runJsSnippet('if (window.MRTLeafletBridge && window.MRTLeafletBridge.renderStationCrowds) window.MRTLeafletBridge.renderStationCrowds("$id", $jsonStr);');
+    } catch (_) {}
+  }
+
   void invalidateSize() {
     final id = _containerId;
     if (id == null || !kIsWeb) return;

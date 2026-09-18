@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'crowd_density.dart';
 
 /// ETA Confidence Band color rating.
 /// Never a single fake-precise number — color-coded with explanation.
@@ -36,6 +37,9 @@ class RouteLeg {
   final String? lineOrService; // e.g. 'EWL', '190', 'SHUTTLE-EWL'
   final String departureStop;
   final String arrivalStop;
+  final String? departureStationCode;
+  final String? arrivalStationCode;
+  final CrowdLevel crowdLevel;
   final int durationSeconds;
   final double distanceMeters;
   final List<List<double>> coordinates; // [[lat, lon], ...]
@@ -48,6 +52,9 @@ class RouteLeg {
     this.lineOrService,
     required this.departureStop,
     required this.arrivalStop,
+    this.departureStationCode,
+    this.arrivalStationCode,
+    this.crowdLevel = CrowdLevel.na,
     required this.durationSeconds,
     this.distanceMeters = 0.0,
     this.coordinates = const [],
@@ -71,11 +78,10 @@ class RoutePlan {
   final String? rerouteReason;
   final ConfidenceLevel confidence;
   final String confidenceReason;
-  final String title;
-  final String? badge;
   final bool hasRainRisk;
   final bool usesShelteredWalkways;
   final RoutePlan? alternativeRoute; // Shown side-by-side
+  final Map<String, CrowdLevel> stationCrowds;
   final bool isSimulated;
 
   const RoutePlan({
@@ -89,26 +95,32 @@ class RoutePlan {
     this.rerouteReason,
     this.confidence = ConfidenceLevel.green,
     required this.confidenceReason,
-    this.title = 'Fastest Transit Route',
-    this.badge,
     this.hasRainRisk = false,
     this.usesShelteredWalkways = false,
     this.alternativeRoute,
+    this.stationCrowds = const {},
     this.isSimulated = false,
   });
 
-  /// True if route includes any bus or shuttle segment
-  bool get hasBus => legs.any((l) => l.mode == 'BUS' || l.mode == 'SHUTTLE');
+  /// Realistic ETA band with confidence interval instead of a single fake-precise number
+  String get etaBand {
+    switch (confidence) {
+      case ConfidenceLevel.green:
+        // High confidence: small realistic window e.g. 35 - 38 min
+        return '$totalDurationMinutes–${totalDurationMinutes + 3} min';
+      case ConfidenceLevel.amber:
+        // Moderate confidence: platform crowding or delay window
+        return '$totalDurationMinutes–${totalDurationMinutes + 8} min';
+      case ConfidenceLevel.red:
+        // Low confidence: major disruption with high uncertainty
+        return '$totalDurationMinutes–${totalDurationMinutes + 20}+ min';
+    }
+  }
 
-  /// True if route includes any subway/MRT train segment
-  bool get hasMrt => legs.any((l) => l.mode == 'SUBWAY');
-
-  /// Human-readable travel mode summary
-  String get modeSummary {
-    if (hasMrt && hasBus) return 'MRT + BUS';
-    if (hasBus) return 'BUS ONLY';
-    if (hasMrt) return 'MRT ONLY';
-    return 'WALK';
+  /// Calculates the time difference compared to the alternative/original route (in minutes)
+  int? get delayDifferenceMinutes {
+    if (alternativeRoute == null) return null;
+    return totalDurationMinutes - alternativeRoute!.totalDurationMinutes;
   }
 
   /// All transit lines used in this route
@@ -151,3 +163,4 @@ class RoutePlan {
     return coords;
   }
 }
+

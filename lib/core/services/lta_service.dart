@@ -194,6 +194,20 @@ class LtaDataMallService {
     ];
   }
 
+  /// Fetches a geospatial layer from DataMall (e.g. CoveredLinkWay, TrainStationExit, Footpath).
+  Future<Map<String, dynamic>?> getGeospatialLayer(String layerId) async {
+    if (ApiConfig.ltaAccountKey.isNotEmpty) {
+      try {
+        final uri = Uri.parse('${ApiConfig.ltaGeospatial}?ID=$layerId');
+        final response = await _client.get(uri, headers: ApiConfig.ltaHeaders);
+        if (response.statusCode == 200) {
+          return jsonDecode(response.body) as Map<String, dynamic>;
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
   // ---------------------------------------------------------------------------
   // Simulated Disruption Data (Permitted by PS2 Section 2.6 for reliable demo)
   // ---------------------------------------------------------------------------
