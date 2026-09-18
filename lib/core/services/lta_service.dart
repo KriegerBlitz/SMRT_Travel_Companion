@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
+import '../debug/debug_service.dart';
 import '../models/bus_arrival.dart';
 import '../models/crowd_density.dart';
 import '../models/disruption_alert.dart';
@@ -8,19 +9,25 @@ import '../models/facility_maintenance.dart';
 import '../transit/canonical_line_table.dart';
 
 /// Service client for official LTA DataMall endpoints.
+/// Strictly isolates live data from simulated data per competition rules.
 class LtaDataMallService {
   final http.Client _client;
+  final DebugService _debugService;
 
-  LtaDataMallService({http.Client? client}) : _client = client ?? http.Client();
+  LtaDataMallService({http.Client? client, DebugService? debugService})
+      : _client = client ?? http.Client(),
+        _debugService = debugService ?? DebugService.instance;
 
-  /// Fetches live train service alerts or fallback simulated alert if specified.
+  /// Fetches live train service alerts. Simulated alerts are ONLY returned if
+  /// explicit simulation is requested or Debug Mode is enabled.
   Future<TrainServiceAlert> getTrainServiceAlerts({bool simulateDisruption = false}) async {
-    if (simulateDisruption) {
+    final shouldSimulate = simulateDisruption || _debugService.simulateDisruption;
+    if (shouldSimulate) {
       return getSimulatedDisruptionAlert();
     }
 
     if (ApiConfig.ltaAccountKey.isEmpty) {
-      // Normal quiet day response as default when no key is injected
+      // Live feed quiet day baseline (0 active alerts)
       return const TrainServiceAlert(
         status: 1,
         affectedSegments: [],
@@ -37,11 +44,11 @@ class LtaDataMallService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return TrainServiceAlert.fromJson(data);
+        return TrainServiceAlert.fromJson(data, isSimulated: false);
       }
     } catch (_) {}
 
-    return const TrainServiceAlert(status: 1, affectedSegments: [], messages: []);
+    return const TrainServiceAlert(status: 1, affectedSegments: [], messages: [], isSimulated: false);
   }
 
   /// Fetches real-time station crowd density for a given line code.
@@ -64,8 +71,17 @@ class LtaDataMallService {
       } catch (_) {}
     }
 
-    // Default realistic baseline crowd density
-    return _generateDefaultCrowd(queryLine, isForecast: false);
+    // If Debug Mode is explicitly enabled, return simulated crowd data
+    if (_debugService.isDebugMode) {
+      return _generateSimulatedCrowd(
+        queryLine,
+        isForecast: false,
+        simulateSurge: _debugService.simulateCrowdSurge,
+      );
+    }
+
+    // In Live Mode, do NOT present fake crowds. Report NA (unavailable)
+    return _generateNaCrowd(queryLine, isForecast: false);
   }
 
   /// Fetches 30-min-ahead crowd forecast for proactive notification.
@@ -87,7 +103,17 @@ class LtaDataMallService {
       } catch (_) {}
     }
 
-    return _generateDefaultCrowd(queryLine, isForecast: true);
+    // If Debug Mode is explicitly enabled, return simulated crowd forecast
+    if (_debugService.isDebugMode) {
+      return _generateSimulatedCrowd(
+        queryLine,
+        isForecast: true,
+        simulateSurge: _debugService.simulateCrowdSurge,
+      );
+    }
+
+    // In Live Mode, do NOT present fake crowds. Report NA (unavailable)
+    return _generateNaCrowd(queryLine, isForecast: true);
   }
 
   /// Fetches lift maintenance status at stations/exits (Crucial for Mdm Lim).
@@ -187,12 +213,17 @@ class LtaDataMallService {
     );
   }
 
-  List<StationCrowd> _generateDefaultCrowd(String lineCode, {required bool isForecast}) {
+  List<StationCrowd> _generateSimulatedCrowd(
+    String lineCode, {
+    required bool isForecast,
+    required bool simulateSurge,
+  }) {
     final stations = CanonicalLineTable.findStationsOnLine(lineCode);
     return stations.map((s) {
       CrowdLevel lvl = CrowdLevel.low;
-      // Realistic commuter baseline crowding on major interchanges
-      if (s.code == 'EW14' || s.code == 'EW13' || s.code == 'EW24' || s.code == 'NS24') {
+      if (simulateSurge && (s.code == 'EW14' || s.code == 'EW13' || s.code == 'EW2')) {
+        lvl = CrowdLevel.high;
+      } else if (s.code == 'EW14' || s.code == 'EW13' || s.code == 'EW24' || s.code == 'NS24') {
         lvl = CrowdLevel.moderate;
       }
       return StationCrowd(
@@ -200,6 +231,19 @@ class LtaDataMallService {
         startTime: '07:30',
         endTime: '08:00',
         crowdLevel: lvl,
+        isForecast: isForecast,
+      );
+    }).toList();
+  }
+
+  List<StationCrowd> _generateNaCrowd(String lineCode, {required bool isForecast}) {
+    final stations = CanonicalLineTable.findStationsOnLine(lineCode);
+    return stations.map((s) {
+      return StationCrowd(
+        stationCode: s.code,
+        startTime: '07:30',
+        endTime: '08:00',
+        crowdLevel: CrowdLevel.na,
         isForecast: isForecast,
       );
     }).toList();

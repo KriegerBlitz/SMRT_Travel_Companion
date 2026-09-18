@@ -1,3 +1,4 @@
+import '../debug/debug_service.dart';
 import '../models/crowd_density.dart';
 import '../models/disruption_alert.dart';
 import '../models/facility_maintenance.dart';
@@ -8,20 +9,25 @@ import 'weather_service.dart';
 
 /// Central decision engine that combines OneMap routing with real-time LTA
 /// disruptions, station crowd forecasts, lift maintenance, and weather nowcasts.
+/// Strictly enforces live-only operations unless Debug Mode is explicitly activated.
 class TransitRoutingEngine {
   final OneMapService _oneMapService;
   final LtaDataMallService _ltaService;
   final WeatherService _weatherService;
+  final DebugService _debugService;
 
   TransitRoutingEngine({
     OneMapService? oneMapService,
     LtaDataMallService? ltaService,
     WeatherService? weatherService,
+    DebugService? debugService,
   })  : _oneMapService = oneMapService ?? OneMapService(),
         _ltaService = ltaService ?? LtaDataMallService(),
-        _weatherService = weatherService ?? WeatherService();
+        _weatherService = weatherService ?? WeatherService(),
+        _debugService = debugService ?? DebugService.instance;
 
   /// Plans an intelligent, disruption-aware and accessibility-aware journey.
+  /// Strictly requires Debug Mode to be active for any simulated data injection.
   Future<RoutePlan> planCommuterJourney({
     required String originName,
     required double startLat,
@@ -35,15 +41,26 @@ class TransitRoutingEngine {
     bool simulateRain = false,
     bool forceHighCrowd = false,
   }) async {
+    // Strict isolation: Simulations are strictly locked unless Debug Mode is enabled
+    final canSimulate = _debugService.isDebugMode;
+    final effectiveSimulateDisruption =
+        canSimulate && (simulateDisruption || _debugService.simulateDisruption);
+    final effectiveSimulateLiftOutage =
+        canSimulate && (simulateLiftOutage || _debugService.simulateLiftOutage);
+    final effectiveSimulateRain =
+        canSimulate && (simulateRain || _debugService.simulateRainNowcast);
+    final effectiveForceHighCrowd =
+        canSimulate && (forceHighCrowd || _debugService.simulateCrowdSurge);
+
     // 1. Fetch real-time LTA alerts
     final alert = await _ltaService.getTrainServiceAlerts(
-      simulateDisruption: simulateDisruption,
+      simulateDisruption: effectiveSimulateDisruption,
     );
 
     // 2. Query 2-hour weather nowcast (if Mdm Lim or rain simulation)
     final weather = await _weatherService.checkRainNowcast(
       area: originName,
-      simulateRain: simulateRain,
+      simulateRain: effectiveSimulateRain,
     );
 
     // 3. Obtain base door-to-door route from OneMap
@@ -64,13 +81,13 @@ class TransitRoutingEngine {
       crowdForecasts.addAll(lineCrowds);
     }
 
-    final hasPredictedCrowdSpike = forceHighCrowd ||
+    final hasPredictedCrowdSpike = effectiveForceHighCrowd ||
         crowdForecasts.any((c) => c.crowdLevel == CrowdLevel.high);
 
     // 5. Evaluate Lift Outages (Critical for Mdm Lim)
     List<LiftMaintenance> liftOutages = [];
     if (persona == 'mdmLim') {
-      if (simulateLiftOutage) {
+      if (effectiveSimulateLiftOutage) {
         liftOutages = [
           const LiftMaintenance(
             station: 'EW16',
@@ -154,7 +171,7 @@ class TransitRoutingEngine {
       confidenceReason: confidenceReason,
       hasRainRisk: weather.isRainingOrImminent,
       usesShelteredWalkways: baseRoute.usesShelteredWalkways,
-      isSimulated: alert.isSimulated || weather.isSimulated || forceHighCrowd,
+      isSimulated: canSimulate && (alert.isSimulated || weather.isSimulated || effectiveForceHighCrowd),
     );
   }
 

@@ -86,19 +86,24 @@
 
 ---
 
-### 7. Simulation & Debug Engine
-- Built-in simulation flags in `TransitRoutingEngine`:
-  - `simulateDisruption: true` (injects EWL signalling fault + Free MRT Shuttle).
-  - `simulateLiftOutage: true` (injects lift outage at Outram Park + Bus 197 WAB alternative).
-  - `simulateRain: true` (injects 2-hour rain nowcast + CoveredLinkWay sheltered walkway).
-  - `forceHighCrowd: true` (injects platform crowding surge + proactive leave-earlier advice).
-- Every simulated response automatically sets `isSimulated = true` to clearly badge simulated data during demos.
+### 7. Dedicated Debug & Simulation Controller (`DebugService`)
+- **File**: [`lib/core/debug/debug_service.dart`](lib/core/debug/debug_service.dart)
+- **Strict Competition Isolation**:
+  - `isDebugMode = false` by default (Strict Live Mode).
+  - When Debug Mode is OFF, all simulation flags are completely locked and neutralized. The app strictly hits live endpoints or reports live empty states.
+  - When Debug Mode is explicitly activated, the judge/developer can toggle specific scenario replays:
+    * `simulateDisruption`: Injects EWL signalling fault + Free MRT Shuttle.
+    * `simulateLiftOutage`: Injects Outram Park Exit 7 lift maintenance + Bus 197 WAB alternative.
+    * `simulateRainNowcast`: Injects 2-hour rain nowcast + CoveredLinkWay sheltered walkway.
+    * `simulateCrowdSurge`: Injects platform crowding surge + proactive leave-earlier advice.
+    * `deadReckoningTimer`: Controls underground elapsed countdown timer.
+  - Every simulated response automatically sets `isSimulated = true` with active scenario audit tags.
 
 ---
 
 ### 8. Automated Testing & Verification
 - **Test Files**: [`test/canonical_line_table_test.dart`](test/canonical_line_table_test.dart), [`test/transit_services_test.dart`](test/transit_services_test.dart)
-- **13/13 Unit Tests Passing** across all routing scenarios and model parsers.
+- **14/14 Unit Tests Passing** including strict competition isolation validation.
 - **Static Analysis**: `flutter analyze` reports **0 issues**.
 
 ---

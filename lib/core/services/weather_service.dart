@@ -1,13 +1,17 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
+import '../debug/debug_service.dart';
 
 /// Real-time 2-hour weather nowcast from data.gov.sg (no API key required).
 /// Feeds Mdm Lim's covered-vs-uncovered route choice only.
 class WeatherService {
   final http.Client _client;
+  final DebugService _debugService;
 
-  WeatherService({http.Client? client}) : _client = client ?? http.Client();
+  WeatherService({http.Client? client, DebugService? debugService})
+      : _client = client ?? http.Client(),
+        _debugService = debugService ?? DebugService.instance;
 
   /// Checks whether rain is forecast within the next 2 hours for a target Singapore location.
   /// (e.g. 'Bedok', 'Outram', 'Tampines', 'Bukit Merah')
@@ -15,7 +19,8 @@ class WeatherService {
     required String area,
     bool simulateRain = false,
   }) async {
-    if (simulateRain) {
+    final shouldSimulate = simulateRain || _debugService.simulateRainNowcast;
+    if (shouldSimulate) {
       return WeatherForecastResult(
         area: area,
         forecast: 'Thundery Showers',

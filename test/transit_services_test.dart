@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:travelcompanion/core/debug/debug_service.dart';
 import 'package:travelcompanion/core/models/disruption_alert.dart';
 import 'package:travelcompanion/core/models/route_plan.dart';
 import 'package:travelcompanion/core/services/lta_service.dart';
@@ -7,6 +8,10 @@ import 'package:travelcompanion/core/services/transit_routing_engine.dart';
 import 'package:travelcompanion/core/services/weather_service.dart';
 
 void main() {
+  setUp(() {
+    DebugService.instance.resetToLiveMode();
+  });
+
   group('TrainServiceAlert & Mitigation Parsing', () {
     test('correctly parses nested AffectedSegments and FreeMRTShuttle mitigations', () {
       final sampleJson = {
@@ -85,7 +90,29 @@ void main() {
       expect(plan.transitLinesUsed, contains('EWL'));
     });
 
-    test('Rachel: Proactive warning when crowd forecast indicates high density', () async {
+    test('Strict Competition Rule: When Debug Mode is OFF, simulated data is completely blocked', () async {
+      DebugService.instance.resetToLiveMode();
+
+      // Passing simulate flags must be ignored because Debug Mode is OFF
+      final plan = await engine.planCommuterJourney(
+        originName: 'Tampines',
+        startLat: 1.3533,
+        startLon: 103.9452,
+        destinationName: 'Raffles Place',
+        endLat: 1.2830,
+        endLon: 103.8513,
+        persona: 'rachel',
+        simulateDisruption: true, // Ignored
+        forceHighCrowd: true, // Ignored
+      );
+
+      expect(plan.isRerouted, isFalse);
+      expect(plan.isSimulated, isFalse);
+      expect(plan.confidence, equals(ConfidenceLevel.green));
+    });
+
+    test('Rachel: Proactive warning when crowd forecast indicates high density (Debug Mode)', () async {
+      DebugService.instance.setDebugMode(true);
       final plan = await engine.planCommuterJourney(
         originName: 'Tampines',
         startLat: 1.3533,
@@ -97,11 +124,13 @@ void main() {
         forceHighCrowd: true,
       );
 
+      expect(plan.isSimulated, isTrue);
       expect(plan.confidence, equals(ConfidenceLevel.amber));
       expect(plan.confidenceReason, contains('High platform crowding forecast'));
     });
 
-    test('Rachel: Reroutes automatically during disruption using real LTA shuttle mitigation', () async {
+    test('Rachel: Reroutes automatically during disruption using real LTA shuttle mitigation (Debug Mode)', () async {
+      DebugService.instance.setDebugMode(true);
       final plan = await engine.planCommuterJourney(
         originName: 'Tampines',
         startLat: 1.3533,
@@ -113,6 +142,7 @@ void main() {
         simulateDisruption: true,
       );
 
+      expect(plan.isSimulated, isTrue);
       expect(plan.isRerouted, isTrue);
       expect(plan.rerouteReason?.toLowerCase(), contains('free mrt shuttle'));
       expect(plan.legs.any((l) => l.mode == 'SHUTTLE'), isTrue);
@@ -121,7 +151,8 @@ void main() {
       expect(plan.alternativeRoute!.legs.any((l) => l.isDisrupted), isTrue);
     });
 
-    test('Mdm Lim: Lift outage at station exit triggers wheelchair-accessible bus alternative', () async {
+    test('Mdm Lim: Lift outage at station exit triggers wheelchair-accessible bus alternative (Debug Mode)', () async {
+      DebugService.instance.setDebugMode(true);
       final plan = await engine.planCommuterJourney(
         originName: 'Bedok',
         startLat: 1.3240,
@@ -133,12 +164,14 @@ void main() {
         simulateLiftOutage: true,
       );
 
+      expect(plan.isSimulated, isTrue);
       expect(plan.isRerouted, isTrue);
       expect(plan.rerouteReason, contains('Lift outage'));
       expect(plan.legs.any((l) => l.mode == 'BUS' && l.lineOrService == 'Bus 197'), isTrue);
     });
 
-    test('Mdm Lim: Rain nowcast proactively switches to CoveredLinkWay sheltered route', () async {
+    test('Mdm Lim: Rain nowcast proactively switches to CoveredLinkWay sheltered route (Debug Mode)', () async {
+      DebugService.instance.setDebugMode(true);
       final plan = await engine.planCommuterJourney(
         originName: 'Bedok',
         startLat: 1.3240,
@@ -150,6 +183,7 @@ void main() {
         simulateRain: true,
       );
 
+      expect(plan.isSimulated, isTrue);
       expect(plan.isRerouted, isTrue);
       expect(plan.usesShelteredWalkways, isTrue);
       expect(plan.hasRainRisk, isTrue);
