@@ -17,9 +17,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 800));
 
-      // 1. Verify Top Branding
+      // 1. Verify Top Branding & No 'LIVE' indicator at top
       expect(find.text('SMRT Travel Companion'), findsOneWidget);
-      expect(find.text('LIVE'), findsOneWidget);
+      expect(find.text('LIVE'), findsNothing);
+      expect(find.text('© OneMap · © OpenStreetMap contributors'), findsOneWidget);
 
       // 2. Verify Search Input with greyed-out placeholder
       expect(find.text('Bugis to Harborfront on Wheelchair'), findsOneWidget);
@@ -31,6 +32,7 @@ void main() {
 
       // 4. Verify Weather Forecast Bar with nowcast and emoji present
       expect(find.textContaining('Nowcast'), findsOneWidget);
+      expect(find.text('LIVE NOWCAST'), findsOneWidget);
 
       // 5. Verify Floating Map Touch Controls
       expect(find.byIcon(Icons.add_rounded), findsOneWidget);

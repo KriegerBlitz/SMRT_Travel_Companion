@@ -121,24 +121,42 @@ class WeatherForecastBar extends StatelessWidget {
 
           // Live / Simulated Compliance Pill
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isSimulated
-                  ? const Color(0xFFEF4444).withValues(alpha: 0.2)
-                  : const Color(0xFF10B981).withValues(alpha: 0.15),
+              gradient: isSimulated
+                  ? null
+                  : const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white,
+                        Color(0xFFE2E8F0),
+                      ],
+                    ),
+              color: isSimulated ? const Color(0xFFEF4444).withValues(alpha: 0.2) : null,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isSimulated
                     ? const Color(0xFFEF4444).withValues(alpha: 0.4)
-                    : const Color(0xFF10B981).withValues(alpha: 0.3),
+                    : Colors.white.withValues(alpha: 0.5),
               ),
+              boxShadow: isSimulated
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
             ),
             child: Text(
               isSimulated ? 'SIMULATED' : 'LIVE NOWCAST',
               style: GoogleFonts.jetBrainsMono(
-                color: isSimulated ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+                color: isSimulated ? const Color(0xFFEF4444) : Colors.black,
                 fontSize: 9,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
               ),
             ),
           ),
