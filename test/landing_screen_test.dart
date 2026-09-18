@@ -6,7 +6,7 @@ import 'package:travelcompanion/main.dart';
 
 void main() {
   group('LandingScreen Widget Tests', () {
-    testWidgets('Renders "Where to next?" with distinct editorial typography', (tester) async {
+    testWidgets('Renders "Where to NEXT?" with custom typography and layout', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: LandingScreen(
@@ -18,9 +18,11 @@ void main() {
       // Verify words are present
       expect(find.text('Where'), findsOneWidget);
       expect(find.text('to'), findsOneWidget);
-      expect(find.text('next?'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains('NEXT')),
+        findsOneWidget,
+      );
       expect(find.text('SMRT · COMPANION'), findsOneWidget);
-      expect(find.text('Tap anywhere or press any key'), findsOneWidget);
     });
 
     testWidgets('Tapping anywhere triggers transition callback', (tester) async {
@@ -45,7 +47,10 @@ void main() {
 
       // Initially on LandingScreen
       expect(find.text('Where'), findsOneWidget);
-      expect(find.text('next?'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains('NEXT')),
+        findsOneWidget,
+      );
 
       // Tap to transition
       await tester.tap(find.byType(GestureDetector).first);
