@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travelcompanion/features/home/home_screen.dart';
-import 'package:travelcompanion/features/journey/journey_screen.dart';
-import 'package:travelcompanion/features/journey/widgets/transit_journey_diagram.dart';
+import 'package:travelcompanion/features/home/widgets/route_preview_sheet.dart';
 
 void main() {
   group('HomeScreen Widget Tests', () {
@@ -59,7 +58,7 @@ void main() {
     });
 
     testWidgets(
-        'Tapping [->] arrow redirects to JourneyScreen with ETA and transit diagram',
+        'Tapping [->] arrow plans route and displays RoutePreviewSheet with ETA',
         (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -77,11 +76,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 800));
 
-      // Verify redirection to JourneyScreen
-      expect(find.byType(JourneyScreen), findsOneWidget);
-      expect(find.textContaining('mins ETA'), findsOneWidget);
-      expect(find.text('ROUTE TIMELINE'), findsOneWidget);
-      expect(find.byType(TransitJourneyDiagram), findsOneWidget);
+      // Verify display of RoutePreviewSheet
+      expect(find.byType(RoutePreviewSheet), findsOneWidget);
+      expect(find.textContaining('ETA'), findsOneWidget);
     });
 
     testWidgets('Map floating buttons respond to tap gestures', (tester) async {

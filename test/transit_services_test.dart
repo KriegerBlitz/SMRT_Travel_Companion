@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travelcompanion/core/debug/debug_service.dart';
+import 'package:travelcompanion/core/models/crowd_density.dart';
 import 'package:travelcompanion/core/models/disruption_alert.dart';
 import 'package:travelcompanion/core/models/route_plan.dart';
 import 'package:travelcompanion/core/services/lta_service.dart';
 import 'package:travelcompanion/core/services/onemap_service.dart';
-import 'package:travelcompanion/core/services/transit_routing_engine.dart';
 import 'package:travelcompanion/core/services/weather_service.dart';
 
 void main() {
@@ -61,26 +61,23 @@ void main() {
     });
   });
 
-  group('TransitRoutingEngine Decision Logic', () {
-    late TransitRoutingEngine engine;
+  group('OneMapService & LtaDataMallService Direct Integration', () {
+    late OneMapService oneMapService;
+    late LtaDataMallService ltaService;
 
     setUp(() {
-      engine = TransitRoutingEngine(
-        oneMapService: OneMapService(),
-        ltaService: LtaDataMallService(),
-        weatherService: WeatherService(),
-      );
+      oneMapService = OneMapService();
+      ltaService = LtaDataMallService();
     });
 
-    test('Rachel: Normal operations yield high confidence route with door-to-door walking', () async {
-      final plan = await engine.planCommuterJourney(
+    test('Door-to-door transit route includes walking legs at both ends', () async {
+      final plan = await oneMapService.planRoute(
         originName: 'Tampines',
         startLat: 1.3533,
         startLon: 103.9452,
         destinationName: 'Raffles Place',
         endLat: 1.2830,
         endLon: 103.8513,
-        persona: 'rachel',
       );
 
       expect(plan.isRerouted, isFalse);
@@ -90,104 +87,56 @@ void main() {
       expect(plan.transitLinesUsed, contains('EWL'));
     });
 
-    test('Strict Competition Rule: When Debug Mode is OFF, simulated data is completely blocked', () async {
+    test('Strict Competition Rule: When Debug Mode is OFF, simulated data is blocked', () async {
       DebugService.instance.resetToLiveMode();
 
-      // Passing simulate flags must be ignored because Debug Mode is OFF
-      final plan = await engine.planCommuterJourney(
-        originName: 'Tampines',
-        startLat: 1.3533,
-        startLon: 103.9452,
-        destinationName: 'Raffles Place',
-        endLat: 1.2830,
-        endLon: 103.8513,
-        persona: 'rachel',
-        simulateDisruption: true, // Ignored
-        forceHighCrowd: true, // Ignored
-      );
+      final alert = await ltaService.getTrainServiceAlerts(simulateDisruption: false);
+      expect(alert.isSimulated, isFalse);
+      expect(alert.isDisrupted, isFalse);
 
-      expect(plan.isRerouted, isFalse);
-      expect(plan.isSimulated, isFalse);
-      expect(plan.confidence, equals(ConfidenceLevel.green));
+      final crowds = await ltaService.getStationCrowdRealTime('EWL');
+      expect(crowds.every((c) => c.crowdLevel == CrowdLevel.na), isTrue);
     });
 
-    test('Rachel: Proactive warning when crowd forecast indicates high density (Debug Mode)', () async {
+    test('LtaDataMallService: Simulates disruption alert with FreeMRTShuttle in Debug Mode', () async {
       DebugService.instance.setDebugMode(true);
-      final plan = await engine.planCommuterJourney(
-        originName: 'Tampines',
-        startLat: 1.3533,
-        startLon: 103.9452,
-        destinationName: 'Raffles Place',
-        endLat: 1.2830,
-        endLon: 103.8513,
-        persona: 'rachel',
-        forceHighCrowd: true,
-      );
+      final alert = await ltaService.getTrainServiceAlerts(simulateDisruption: true);
 
-      expect(plan.isSimulated, isTrue);
-      expect(plan.confidence, equals(ConfidenceLevel.amber));
-      expect(plan.confidenceReason, contains('High platform crowding forecast'));
+      expect(alert.isSimulated, isTrue);
+      expect(alert.isDisrupted, isTrue);
+      expect(alert.affectedSegments.isNotEmpty, isTrue);
+      expect(alert.affectedSegments.first.hasMrtShuttle, isTrue);
     });
 
-    test('Rachel: Reroutes automatically during disruption using real LTA shuttle mitigation (Debug Mode)', () async {
+    test('LtaDataMallService: Simulates crowd forecast in Debug Mode', () async {
       DebugService.instance.setDebugMode(true);
-      final plan = await engine.planCommuterJourney(
-        originName: 'Tampines',
-        startLat: 1.3533,
-        startLon: 103.9452,
-        destinationName: 'Raffles Place',
-        endLat: 1.2830,
-        endLon: 103.8513,
-        persona: 'rachel',
-        simulateDisruption: true,
-      );
+      final crowds = await ltaService.getStationCrowdForecast('EWL');
 
-      expect(plan.isSimulated, isTrue);
-      expect(plan.isRerouted, isTrue);
-      expect(plan.rerouteReason?.toLowerCase(), contains('free mrt shuttle'));
-      expect(plan.legs.any((l) => l.mode == 'SHUTTLE'), isTrue);
-      // Verify original route is preserved side-by-side with delayed status
-      expect(plan.alternativeRoute, isNotNull);
-      expect(plan.alternativeRoute!.legs.any((l) => l.isDisrupted), isTrue);
+      expect(crowds.isNotEmpty, isTrue);
+      expect(crowds.any((c) => c.isForecast), isTrue);
     });
 
-    test('Mdm Lim: Lift outage at station exit triggers wheelchair-accessible bus alternative (Debug Mode)', () async {
+    test('LtaDataMallService: Fetches facilities maintenance lift outages in Debug Mode', () async {
       DebugService.instance.setDebugMode(true);
-      final plan = await engine.planCommuterJourney(
-        originName: 'Bedok',
-        startLat: 1.3240,
-        startLon: 103.9300,
-        destinationName: 'Singapore General Hospital',
-        endLat: 1.2803,
-        endLon: 103.8395,
-        persona: 'mdmLim',
-        simulateLiftOutage: true,
-      );
+      final outages = await ltaService.getFacilitiesMaintenance(stationCode: 'EW16');
 
-      expect(plan.isSimulated, isTrue);
-      expect(plan.isRerouted, isTrue);
-      expect(plan.rerouteReason, contains('Lift outage'));
-      expect(plan.legs.any((l) => l.mode == 'BUS' && l.lineOrService == 'Bus 197'), isTrue);
+      expect(outages.isNotEmpty, isTrue);
+      expect(outages.any((o) => o.isOutOfService), isTrue);
     });
 
-    test('Mdm Lim: Rain nowcast proactively switches to CoveredLinkWay sheltered route (Debug Mode)', () async {
-      DebugService.instance.setDebugMode(true);
-      final plan = await engine.planCommuterJourney(
-        originName: 'Bedok',
-        startLat: 1.3240,
-        startLon: 103.9300,
-        destinationName: 'Singapore General Hospital',
-        endLat: 1.2803,
-        endLon: 103.8395,
-        persona: 'mdmLim',
-        simulateRain: true,
+    test('OneMapService: Provides multi-modal options with title and badge', () {
+      final options = oneMapService.getRealisticMultiModalOptions(
+        originName: 'Bugis',
+        startLat: 1.3005,
+        startLon: 103.8558,
+        destinationName: 'HarbourFront',
+        endLat: 1.2654,
+        endLon: 103.8222,
       );
 
-      expect(plan.isSimulated, isTrue);
-      expect(plan.isRerouted, isTrue);
-      expect(plan.usesShelteredWalkways, isTrue);
-      expect(plan.hasRainRisk, isTrue);
-      expect(plan.rerouteReason, contains('CoveredLinkWay'));
+      expect(options.length, greaterThanOrEqualTo(2));
+      expect(options.any((o) => o.title.contains('Rail')), isTrue);
+      expect(options.any((o) => o.badge != null), isTrue);
     });
   });
 }

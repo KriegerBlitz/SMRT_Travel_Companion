@@ -141,6 +141,26 @@ class LtaDataMallService {
       } catch (_) {}
     }
 
+    if (_debugService.isDebugMode) {
+      final simulated = [
+        const LiftMaintenance(
+          station: 'EW16',
+          unitId: 'LIFT-01',
+          location: 'Exit 7 (Near SGH Diabetes Centre)',
+          exit: '7',
+          status: 'Under Maintenance',
+          description: 'Scheduled lift overhaul',
+        ),
+      ];
+      if (stationCode != null) {
+        final target = stationCode.trim().toUpperCase();
+        return simulated
+            .where((r) => r.station.toUpperCase() == target)
+            .toList();
+      }
+      return simulated;
+    }
+
     return [];
   }
 

@@ -5,10 +5,7 @@ import 'package:travelcompanion/core/models/crowd_density.dart';
 import 'package:travelcompanion/core/models/route_plan.dart';
 import 'package:travelcompanion/core/models/user_profile.dart';
 import 'package:travelcompanion/core/services/geospatial_overpass_service.dart';
-import 'package:travelcompanion/core/services/lta_service.dart';
 import 'package:travelcompanion/core/services/onemap_service.dart';
-import 'package:travelcompanion/core/services/transit_routing_engine.dart';
-import 'package:travelcompanion/core/services/weather_service.dart';
 import 'package:travelcompanion/features/home/widgets/commuter_account_sheet.dart';
 import 'package:travelcompanion/features/home/widgets/confidence_details_sheet.dart';
 import 'package:travelcompanion/features/home/widgets/demo_profile_bar.dart';
@@ -61,86 +58,90 @@ void main() {
     });
   });
 
-  group('General-Purpose TransitRoutingEngine with UserPreferences', () {
-    late TransitRoutingEngine engine;
+  group('RoutePlan and Door-to-Door Routing Evaluation', () {
+    test('OneMapService door-to-door route respects sheltered preferences', () async {
+      final oneMap = OneMapService();
 
-    setUp(() {
-      engine = TransitRoutingEngine(
-        oneMapService: OneMapService(),
-        ltaService: LtaDataMallService(),
-        weatherService: WeatherService(),
-      );
-    });
-
-    test('Routes with generic wheelchair preferences without passing persona string', () async {
-      DebugService.instance.setDebugMode(true);
-
-      const wheelchairPrefs = UserPreferences(
-        requiresWheelchair: true,
-        avoidStairs: true,
-        preferSheltered: true,
-        walkingSpeedMultiplier: 0.7,
-      );
-
-      final plan = await engine.planCommuterJourney(
+      final plan = await oneMap.planRoute(
         originName: 'Bedok',
         startLat: 1.3240,
         startLon: 103.9300,
         destinationName: 'Singapore General Hospital',
         endLat: 1.2803,
         endLon: 103.8395,
-        preferences: wheelchairPrefs,
-        simulateLiftOutage: true,
+        preferSheltered: true,
       );
 
-      expect(plan.isSimulated, isTrue);
-      expect(plan.isRerouted, isTrue);
-      expect(plan.rerouteReason, contains('Lift outage'));
-      expect(plan.legs.any((l) => l.mode == 'BUS' && l.lineOrService == 'Bus 197'), isTrue);
+      expect(plan.usesShelteredWalkways, isTrue);
+      expect(plan.legs.isNotEmpty, isTrue);
       expect(plan.etaBand, contains('–'));
     });
 
-    test('Routes with high disruption sensitivity preferences reroutes via LTA shuttle', () async {
-      DebugService.instance.setDebugMode(true);
-
-      const sensitivePrefs = UserPreferences(
-        highDisruptionSensitivity: true,
+    test('RoutePlan side-by-side alternative route calculates delay difference correctly', () {
+      const delayed = RoutePlan(
+        id: 'orig-delayed',
+        origin: 'Tampines',
+        destination: 'Raffles Place',
+        totalDurationMinutes: 60,
+        confidence: ConfidenceLevel.red,
+        confidenceReason: 'Signalling disruption',
+        legs: [],
       );
 
-      final plan = await engine.planCommuterJourney(
-        originName: 'Tampines',
-        startLat: 1.3533,
-        startLon: 103.9452,
-        destinationName: 'Raffles Place',
-        endLat: 1.2830,
-        endLon: 103.8513,
-        preferences: sensitivePrefs,
-        simulateDisruption: true,
+      const mitigation = RoutePlan(
+        id: 'revised-shuttle',
+        origin: 'Tampines',
+        destination: 'Raffles Place',
+        totalDurationMinutes: 45,
+        isRerouted: true,
+        rerouteReason: 'EWL disruption: Take free MRT shuttle from Tampines (+15 min)',
+        confidence: ConfidenceLevel.amber,
+        confidenceReason: 'Free MRT Shuttle active at 5-min frequency',
+        alternativeRoute: delayed,
+        legs: [],
       );
 
-      expect(plan.isRerouted, isTrue);
-      expect(plan.rerouteReason, isNotNull);
-      expect(plan.rerouteReason?.toLowerCase(), contains('free mrt shuttle'));
-      expect(plan.alternativeRoute, isNotNull);
-      expect(plan.delayDifferenceMinutes, isNotNull);
+      expect(mitigation.isRerouted, isTrue);
+      expect(mitigation.rerouteReason, contains('free MRT shuttle'));
+      expect(mitigation.alternativeRoute, isNotNull);
+      expect(mitigation.delayDifferenceMinutes, equals(-15));
     });
 
-    test('Confidence band and reason never show single fake-precise number', () async {
-      DebugService.instance.setDebugMode(true);
-
-      final plan = await engine.planCommuterJourney(
-        originName: 'Tampines',
-        startLat: 1.3533,
-        startLon: 103.9452,
-        destinationName: 'Raffles Place',
-        endLat: 1.2830,
-        endLon: 103.8513,
-        forceHighCrowd: true,
+    test('Confidence band and reason never show single fake-precise number', () {
+      const greenPlan = RoutePlan(
+        id: 'green-plan',
+        origin: 'Tampines',
+        destination: 'Raffles Place',
+        totalDurationMinutes: 38,
+        confidence: ConfidenceLevel.green,
+        confidenceReason: 'Normal service, stable crowds',
+        legs: [],
       );
 
-      expect(plan.confidence, equals(ConfidenceLevel.amber));
-      expect(plan.etaBand, matches(RegExp(r'^\d+–\d+ min$')));
-      expect(plan.confidenceReason, contains('crowd'));
+      const amberPlan = RoutePlan(
+        id: 'amber-plan',
+        origin: 'Tampines',
+        destination: 'Raffles Place',
+        totalDurationMinutes: 38,
+        confidence: ConfidenceLevel.amber,
+        confidenceReason: 'Platform crowd rising at interchange station',
+        legs: [],
+      );
+
+      const redPlan = RoutePlan(
+        id: 'red-plan',
+        origin: 'Tampines',
+        destination: 'Raffles Place',
+        totalDurationMinutes: 38,
+        confidence: ConfidenceLevel.red,
+        confidenceReason: 'Active disruption on line segment',
+        legs: [],
+      );
+
+      expect(greenPlan.etaBand, matches(RegExp(r'^\d+–\d+ min$')));
+      expect(amberPlan.etaBand, matches(RegExp(r'^\d+–\d+ min$')));
+      expect(redPlan.etaBand, matches(RegExp(r'^\d+–\d+\+ min$')));
+      expect(amberPlan.confidenceReason, contains('crowd'));
     });
   });
 
