@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/map/leaflet_map_view.dart';
+import 'widgets/landing_hero_graphic.dart';
 
 /// Landing Page: The very first screen the commuter sees.
 ///
@@ -141,60 +142,8 @@ class _LandingScreenState extends State<LandingScreen> {
                     // Push content down to the bottom
                     const Spacer(),
 
-                    // "Where" and "to" side by side above NEXT?
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            'Where',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 54,
-                              fontWeight: FontWeight.w700,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.white,
-                              letterSpacing: -1.2,
-                              height: 0.95,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Text(
-                            'to',
-                            style: GoogleFonts.greatVibes(
-                              fontSize: 56,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white,
-                              height: 0.95,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Tightly stacked "NEXT?" in ultra-tall Bebas Neue font, bold, full width
-                    Transform.translate(
-                      offset: const Offset(0, -6),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: FittedBox(
-                          fit: BoxFit.fitWidth,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'NEXT?',
-                            style: GoogleFonts.bebasNeue(
-                              fontSize: 160,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                              height: 0.85,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Modular Landing Hero (Typography or future custom Canva graphic)
+                    const LandingHeroGraphic(),
 
                     const SizedBox(height: 12),
                   ],
