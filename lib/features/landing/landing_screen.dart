@@ -138,6 +138,15 @@ class _LandingScreenState extends State<LandingScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '© OneMap · © OpenStreetMap contributors',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white.withValues(alpha: 0.50),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
 
                     // Push content down to the bottom
                     const Spacer(),

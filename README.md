@@ -131,3 +131,21 @@ flutter test
 ```bash
 flutter build web
 ```
+
+---
+
+## 📋 Pending Features & Roadmap (For Reference)
+
+1. **Pull-Out / Expandable Bottom Sheet**:
+   - Add interactive vertical drag/pull-out gesture support to the bottom container (indicated by the top grab handle pill).
+   - Allows commuters to smoothly pull up the panel into a full-height sheet showing comprehensive turn-by-turn instructions, alternate routes, and live station crowd breakdown, or slide down to view the full unencumbered live map.
+2. **Dedicated Journey Page**:
+   - Implement the full-screen multi-modal Journey Page receiving the planned route from the natural language search box (`NaturalLanguageRouteService`).
+   - Displays real-time step-by-step guidance, transfer countdown timers, step-free lift navigation, and proactive reroute alerts with side-by-side comparison.
+3. **Dead-Reckoning Underground Navigation**:
+   - Implement step/timer-based dead-reckoning simulation for underground MRT platforms where GPS/cellular signals degrade, maintaining commuter location tracking.
+4. **Custom Canva Hero Typography Asset**:
+   - Replace the current landing page typography component ([`LandingHeroGraphic`](lib/features/landing/widgets/landing_hero_graphic.dart)) with the custom Canva graphic once exported.
+5. **Interactive Station Details & Platform Crowd Inspection**:
+   - Tapping individual MRT station dots on the Leaflet map opens an interactive card showing real-time platform crowding (PCD), lift operational status, and upcoming bus arrivals (WAB).
+
