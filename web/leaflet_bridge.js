@@ -63,6 +63,24 @@
     },
 
     /**
+     * Toggles CSS blur effect on the map container
+     */
+    setBlurred: function (containerId, blurred) {
+      const container = document.getElementById(containerId);
+      if (container) {
+        if (blurred) {
+          container.style.filter = "blur(8px)";
+          container.style.transform = "scale(1.06)";
+          container.style.transition = "filter 0.5s ease, transform 0.5s ease";
+        } else {
+          container.style.filter = "none";
+          container.style.transform = "none";
+          container.style.transition = "filter 0.5s ease, transform 0.5s ease";
+        }
+      }
+    },
+
+    /**
      * Clears all dynamic markers and route polylines
      */
     clearLayers: function (containerId) {

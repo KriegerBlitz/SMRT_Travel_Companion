@@ -79,6 +79,15 @@ class LeafletMapController {
       platform.bridgeInvalidateSize(id);
     } catch (_) {}
   }
+
+  /// Toggles map blur (useful for landing screen background)
+  void setBlurred(bool blurred) {
+    final id = _containerId;
+    if (id == null || !kIsWeb) return;
+    try {
+      platform.bridgeSetBlurred(id, blurred);
+    } catch (_) {}
+  }
 }
 
 // JS interop bridge helpers
@@ -155,6 +164,7 @@ class LeafletMapView extends StatefulWidget {
   final double initialLat;
   final double initialLng;
   final double initialZoom;
+  final bool isBlurred;
   final LeafletMapController? controller;
   final VoidCallback? onMapReady;
 
@@ -163,6 +173,7 @@ class LeafletMapView extends StatefulWidget {
     this.initialLat = 1.3521,
     this.initialLng = 103.8198,
     this.initialZoom = 12.0,
+    this.isBlurred = false,
     this.controller,
     this.onMapReady,
   });
@@ -181,6 +192,14 @@ class _LeafletMapViewState extends State<LeafletMapView> {
   }
 
   @override
+  void didUpdateWidget(covariant LeafletMapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isBlurred != widget.isBlurred) {
+      _controller.setBlurred(widget.isBlurred);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
@@ -191,6 +210,9 @@ class _LeafletMapViewState extends State<LeafletMapView> {
             initialZoom: widget.initialZoom,
             onMapCreated: (containerId) {
               _controller.attachContainer(containerId);
+              if (widget.isBlurred) {
+                _controller.setBlurred(true);
+              }
               widget.onMapReady?.call();
             },
           ),

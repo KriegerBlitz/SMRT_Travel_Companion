@@ -23,6 +23,7 @@ extension MRTLeafletBridgeJSExtension on MRTLeafletBridgeJS {
   external void renderStations(String containerId, JSAny? stations);
   external void renderShelteredWalkway(String containerId, JSAny? coords);
   external void invalidateSize(String containerId);
+  external void setBlurred(String containerId, bool blurred);
 }
 
 class LeafletPlatformMap extends StatefulWidget {
@@ -115,6 +116,10 @@ void bridgeClearLayers(String id) {
 
 void bridgeInvalidateSize(String id) {
   mrtLeafletBridge?.invalidateSize(id);
+}
+
+void bridgeSetBlurred(String id, bool blurred) {
+  mrtLeafletBridge?.setBlurred(id, blurred);
 }
 
 void runJsSnippet(String code) {

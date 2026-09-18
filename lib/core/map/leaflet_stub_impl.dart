@@ -19,24 +19,27 @@ class LeafletPlatformMap extends StatelessWidget {
     return Container(
       color: Colors.blueGrey.shade100,
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.map_outlined, size: 48, color: Colors.blueGrey),
-            const SizedBox(height: 8),
-            Text(
-              'OpenStreetMap (Leaflet Web View)',
-              style: TextStyle(
-                color: Colors.blueGrey.shade800,
-                fontWeight: FontWeight.bold,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.map_outlined, size: 36, color: Colors.blueGrey),
+              const SizedBox(height: 6),
+              Text(
+                'OpenStreetMap (Leaflet Web View)',
+                style: TextStyle(
+                  color: Colors.blueGrey.shade800,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '© OpenStreetMap contributors',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-          ],
+              const SizedBox(height: 4),
+              const Text(
+                '© OpenStreetMap contributors',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -46,4 +49,5 @@ class LeafletPlatformMap extends StatelessWidget {
 void bridgeSetView(String id, double lat, double lng, double? zoom) {}
 void bridgeClearLayers(String id) {}
 void bridgeInvalidateSize(String id) {}
+void bridgeSetBlurred(String id, bool blurred) {}
 void runJsSnippet(String code) {}
