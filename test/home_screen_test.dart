@@ -5,7 +5,8 @@ import 'package:travelcompanion/features/home/home_screen.dart';
 
 void main() {
   group('HomeScreen Widget Tests', () {
-    testWidgets('Renders HomeScreen with map, default search query, and weather emoji',
+    testWidgets(
+        'Renders HomeScreen with minimalist [placeholder [->]] search box and weather emoji',
         (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -20,20 +21,25 @@ void main() {
       expect(find.text('SMRT Travel Companion'), findsOneWidget);
       expect(find.text('LIVE'), findsOneWidget);
 
-      // 2. Verify Search Input with default text
+      // 2. Verify Search Input with greyed-out placeholder
       expect(find.text('Bugis to Harborfront on Wheelchair'), findsOneWidget);
-      expect(find.text('Plan Door-to-Door Journey'), findsOneWidget);
 
-      // 3. Verify Weather Forecast Bar with nowcast and emoji present
+      // 3. Verify [->] Arrow is the ONLY button or icon in the text box
+      expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.search_rounded), findsNothing);
+      expect(find.byIcon(Icons.cancel_rounded), findsNothing);
+
+      // 4. Verify Weather Forecast Bar with nowcast and emoji present
       expect(find.textContaining('Nowcast'), findsOneWidget);
 
-      // 4. Verify Floating Map Touch Controls
+      // 5. Verify Floating Map Touch Controls
       expect(find.byIcon(Icons.add_rounded), findsOneWidget);
       expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
       expect(find.byIcon(Icons.my_location_rounded), findsOneWidget);
     });
 
-    testWidgets('Tapping Clear icon clears the text entry field', (tester) async {
+    testWidgets('Entering custom text in natural language text field updates input',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: HomeScreen(),
@@ -42,17 +48,15 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 800));
 
-      expect(find.text('Bugis to Harborfront on Wheelchair'), findsOneWidget);
-
-      // Tap clear icon
-      await tester.tap(find.byIcon(Icons.cancel_rounded));
+      // Enter query
+      await tester.enterText(find.byType(TextField), 'Orchard to Marina Bay');
       await tester.pump();
 
-      expect(find.text('Bugis to Harborfront on Wheelchair'), findsNothing);
+      expect(find.text('Orchard to Marina Bay'), findsOneWidget);
     });
 
     testWidgets(
-        'Submitting natural language query triggers route planner and displays route preview card with ETA',
+        'Tapping [->] arrow triggers route planner and displays route preview card with ETA',
         (tester) async {
       ParsedJourneyResult? receivedResult;
 
@@ -68,8 +72,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 800));
 
-      // Tap the Plan button
-      final planButton = find.text('Plan');
+      // Tap the [->] arrow button
+      final planButton = find.byIcon(Icons.arrow_forward_rounded);
       expect(planButton, findsOneWidget);
 
       await tester.tap(planButton);

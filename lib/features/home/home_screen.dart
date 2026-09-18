@@ -54,9 +54,7 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _mapController = widget.mapController ?? LeafletMapController();
-    _textController = TextEditingController(
-      text: 'Bugis to Harborfront on Wheelchair',
-    );
+    _textController = TextEditingController();
     _focusNode = FocusNode();
 
     // Entrance animation for slick transition from Landing Page
@@ -125,8 +123,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _handlePlanRoute([String? overrideQuery]) async {
-    final query = (overrideQuery ?? _textController.text).trim();
-    if (query.isEmpty) return;
+    var query = (overrideQuery ?? _textController.text).trim();
+    if (query.isEmpty) {
+      query = 'Bugis to Harborfront on Wheelchair';
+    }
 
     _focusNode.unfocus();
     setState(() {
@@ -271,49 +271,13 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              // Title / Tagline
-              Row(
-                children: [
-                  const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Color(0xFF00D26A),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Plan Door-to-Door Journey',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Natural Language',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white.withValues(alpha: 0.45),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Text Entry Field with default "Bugis to Harborfront on Wheelchair"
+              // Text Entry Field: [placeholder [->]] with white gradient arrow button
               RouteSearchBar(
                 controller: _textController,
                 focusNode: _focusNode,
+                placeholder: 'Bugis to Harborfront on Wheelchair',
                 onSubmitted: (val) => _handlePlanRoute(val),
                 onPlanPressed: () => _handlePlanRoute(),
-                onClear: () {
-                  _textController.clear();
-                  setState(() {});
-                },
               ),
 
               const SizedBox(height: 12),
@@ -345,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen>
       decoration: BoxDecoration(
         color: const Color(0xFF131A26),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF00D26A).withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
@@ -354,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen>
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: Color(0xFF00D26A),
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 12),
@@ -362,9 +326,9 @@ class _HomeScreenState extends State<HomeScreen>
             child: Text(
               'Interpreting query & calculating door-to-door ETA...',
               style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF00D26A),
+                color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),

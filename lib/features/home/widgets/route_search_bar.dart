@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Natural language search input bar accepting queries like "Bugis to Harborfront on Wheelchair"
+/// Minimalist, sleek search input formatted as: [placeholder [->]]
+/// with greyed-out placeholder, white gradient accent, and arrow as the only button/icon.
 class RouteSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final ValueChanged<String> onSubmitted;
   final VoidCallback onPlanPressed;
-  final VoidCallback onClear;
+  final String placeholder;
 
   const RouteSearchBar({
     super.key,
@@ -15,52 +16,49 @@ class RouteSearchBar extends StatelessWidget {
     required this.focusNode,
     required this.onSubmitted,
     required this.onPlanPressed,
-    required this.onClear,
+    this.placeholder = 'Bugis to Harborfront on Wheelchair',
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF131A26),
+        color: const Color(0xFF0F141F).withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF00D26A).withValues(alpha: 0.4),
-          width: 1.2,
+          color: Colors.white.withValues(alpha: 0.16),
+          width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00D26A).withValues(alpha: 0.08),
-            blurRadius: 14,
-            spreadRadius: 1,
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          const SizedBox(width: 14),
-          const Icon(
-            Icons.search_rounded,
-            color: Color(0xFF00D26A),
-            size: 22,
-          ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 16),
+          // Greyed-out placeholder & sleek white text input
           Expanded(
             child: TextField(
               controller: controller,
               focusNode: focusNode,
+              cursorColor: Colors.white,
               style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
               textInputAction: TextInputAction.search,
               onSubmitted: onSubmitted,
               decoration: InputDecoration(
-                hintText: 'Enter route e.g. Bugis to Harborfront on Wheelchair',
+                hintText: placeholder,
                 hintStyle: GoogleFonts.plusJakartaSans(
                   color: Colors.white.withValues(alpha: 0.35),
-                  fontSize: 13,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
                 border: InputBorder.none,
                 isDense: true,
@@ -68,16 +66,9 @@ class RouteSearchBar extends StatelessWidget {
               ),
             ),
           ),
-          if (controller.text.isNotEmpty)
-            IconButton(
-              icon: Icon(
-                Icons.cancel_rounded,
-                color: Colors.white.withValues(alpha: 0.4),
-                size: 18,
-              ),
-              onPressed: onClear,
-            ),
-          // Action button (Plan Journey)
+          const SizedBox(width: 8),
+
+          // [->] Arrow: The ONLY button or icon, styled with white-to-light-grey gradient
           Padding(
             padding: const EdgeInsets.only(right: 6.0),
             child: Material(
@@ -86,39 +77,32 @@ class RouteSearchBar extends StatelessWidget {
                 onTap: onPlanPressed,
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF00D26A), Color(0xFF059669)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white,
+                        Color(0xFFE2E8F0), // Subtle white-to-platinum gradient
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF00D26A).withValues(alpha: 0.35),
+                        color: Colors.white.withValues(alpha: 0.18),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Plan',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Colors.black,
-                        size: 14,
-                      ),
-                    ],
+                  child: const Center(
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.black,
+                      size: 18,
+                    ),
                   ),
                 ),
               ),

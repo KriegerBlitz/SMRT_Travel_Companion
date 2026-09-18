@@ -30,7 +30,7 @@ class WeatherForecastBar extends StatelessWidget {
               height: 14,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Color(0xFF00D26A),
+                color: Colors.white,
               ),
             ),
             const SizedBox(width: 10),

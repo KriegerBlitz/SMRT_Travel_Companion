@@ -52,14 +52,24 @@ class RoutePreviewSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00D26A).withValues(alpha: 0.18),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Colors.white,
+                      Color(0xFFE2E8F0),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF00D26A).withValues(alpha: 0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                    ),
+                  ],
                 ),
                 child: Text(
                   '⏱️ ${result.etaDisplay} ETA',
                   style: GoogleFonts.plusJakartaSans(
-                    color: const Color(0xFF00D26A),
+                    color: Colors.black,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
