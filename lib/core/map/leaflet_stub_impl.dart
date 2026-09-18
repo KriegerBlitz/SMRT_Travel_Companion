@@ -53,3 +53,4 @@ void bridgeClearLayers(String id) {}
 void bridgeInvalidateSize(String id) {}
 void bridgeSetBlurred(String id, bool blurred) {}
 void runJsSnippet(String code) {}
+void registerStationSelectionCallback(void Function(String name, String role) callback) {}

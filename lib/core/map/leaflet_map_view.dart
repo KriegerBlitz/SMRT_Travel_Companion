@@ -106,6 +106,14 @@ class LeafletMapController {
       platform.bridgeSetBlurred(id, blurred);
     } catch (_) {}
   }
+
+  /// Listens to station selection actions from the Leaflet map popups
+  void setStationSelectionListener(void Function(String name, String role) callback) {
+    if (!kIsWeb) return;
+    try {
+      platform.registerStationSelectionCallback(callback);
+    } catch (_) {}
+  }
 }
 
 // JS interop bridge helpers

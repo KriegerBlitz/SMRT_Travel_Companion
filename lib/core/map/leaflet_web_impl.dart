@@ -26,6 +26,7 @@ extension MRTLeafletBridgeJSExtension on MRTLeafletBridgeJS {
   external void renderShelteredWalkway(String containerId, JSAny? coords);
   external void invalidateSize(String containerId);
   external void setBlurred(String containerId, bool blurred);
+  external set onStationSelect(JSFunction? fn);
 }
 
 class LeafletPlatformMap extends StatefulWidget {
@@ -137,6 +138,15 @@ void runJsSnippet(String code) {
   scriptEl.text = code;
   web.document.body?.appendChild(scriptEl);
   scriptEl.remove();
+}
+
+void registerStationSelectionCallback(void Function(String name, String role) callback) {
+  final bridge = mrtLeafletBridge;
+  if (bridge != null) {
+    bridge.onStationSelect = ((JSString name, JSString role) {
+      callback(name.toDart, role.toDart);
+    }).toJS;
+  }
 }
 
 

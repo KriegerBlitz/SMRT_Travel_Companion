@@ -54,6 +54,16 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _mapController = widget.mapController ?? LeafletMapController();
+    _mapController.setStationSelectionListener((name, role) {
+      if (!mounted) return;
+      setState(() {
+        if (role == 'origin') {
+          _textController.text = '$name to Harborfront on Wheelchair';
+        } else {
+          _textController.text = 'Bugis to $name';
+        }
+      });
+    });
     _textController = TextEditingController();
     _focusNode = FocusNode();
 
