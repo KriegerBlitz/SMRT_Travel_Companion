@@ -153,6 +153,11 @@ class _KonamiCodeListenerState extends State<KonamiCodeListener> {
   }
 
   bool _handleGlobalKeyEvent(KeyEvent event) {
+    // Never intercept key events when the commuter is typing in a text field
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus != null && primaryFocus.context?.widget is EditableText) {
+      return false;
+    }
     return _detector.handleKeyEvent(event);
   }
 

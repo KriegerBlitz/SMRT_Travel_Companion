@@ -3,6 +3,8 @@ import '../transit/canonical_line_table.dart';
 import 'transit_routing_engine.dart';
 import 'weather_service.dart';
 
+import '../models/user_profile.dart';
+
 /// Parsed natural language journey request result.
 class ParsedJourneyResult {
   final String rawQuery;
@@ -10,6 +12,7 @@ class ParsedJourneyResult {
   final String destination;
   final String persona; // 'mdmLim', 'rachel', or 'general'
   final bool isWheelchairAccessible;
+  final UserPreferences preferences;
   final RoutePlan routePlan;
   final WeatherForecastResult weather;
 
@@ -19,11 +22,13 @@ class ParsedJourneyResult {
     required this.destination,
     required this.persona,
     required this.isWheelchairAccessible,
+    required this.preferences,
     required this.routePlan,
     required this.weather,
   });
 
-  String get etaDisplay => '${routePlan.totalDurationMinutes} mins';
+  /// Confidence interval ETA band rather than a single fake-precise number
+  String get etaDisplay => routePlan.etaBand;
 }
 
 /// Service that parses natural language transit prompts (e.g. "Bugis to Harborfront on Wheelchair")
@@ -39,7 +44,10 @@ class NaturalLanguageRouteService {
         _weatherService = weatherService ?? WeatherService();
 
   /// Interprets a natural language prompt and produces a comprehensive door-to-door route plan.
-  Future<ParsedJourneyResult> interpretAndPlanRoute(String query) async {
+  Future<ParsedJourneyResult> interpretAndPlanRoute(
+    String query, {
+    UserPreferences? customPreferences,
+  }) async {
     final lower = query.toLowerCase().trim();
 
     // 1. Detect Persona & Accessibility Constraints
@@ -51,12 +59,34 @@ class NaturalLanguageRouteService {
         lower.contains('mdm lim') ||
         lower.contains('senior');
 
+    final isSheltered = lower.contains('shelter') ||
+        lower.contains('rain') ||
+        lower.contains('covered');
+
     final isRachel = lower.contains('rachel') ||
         lower.contains('fastest') ||
         lower.contains('commute') ||
         lower.contains('rush');
 
     final persona = isWheelchair ? 'mdmLim' : (isRachel ? 'rachel' : 'general');
+
+    final effectivePrefs = customPreferences != null
+        ? customPreferences.copyWith(
+            requiresWheelchair:
+                isWheelchair || customPreferences.requiresWheelchair,
+            avoidStairs: isWheelchair || customPreferences.avoidStairs,
+            preferSheltered:
+                isSheltered || isWheelchair || customPreferences.preferSheltered,
+            highDisruptionSensitivity:
+                isRachel || customPreferences.highDisruptionSensitivity,
+          )
+        : UserPreferences(
+            requiresWheelchair: isWheelchair,
+            avoidStairs: isWheelchair,
+            preferSheltered: isSheltered || isWheelchair,
+            highDisruptionSensitivity: isRachel,
+            walkingSpeedMultiplier: isWheelchair ? 0.7 : 1.0,
+          );
 
     // 2. Extract Origin and Destination
     String origin = 'Bugis';
@@ -101,6 +131,7 @@ class NaturalLanguageRouteService {
       endLat: endLat,
       endLon: endLon,
       persona: persona,
+      preferences: effectivePrefs,
     );
 
     return ParsedJourneyResult(
@@ -108,7 +139,8 @@ class NaturalLanguageRouteService {
       origin: origin,
       destination: destination,
       persona: persona,
-      isWheelchairAccessible: isWheelchair,
+      isWheelchairAccessible: effectivePrefs.requiresWheelchair,
+      preferences: effectivePrefs,
       routePlan: plan,
       weather: weather,
     );

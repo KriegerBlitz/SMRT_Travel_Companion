@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'crowd_density.dart';
 
 /// ETA Confidence Band color rating.
 /// Never a single fake-precise number — color-coded with explanation.
@@ -36,6 +37,9 @@ class RouteLeg {
   final String? lineOrService; // e.g. 'EWL', '190', 'SHUTTLE-EWL'
   final String departureStop;
   final String arrivalStop;
+  final String? departureStationCode;
+  final String? arrivalStationCode;
+  final CrowdLevel crowdLevel;
   final int durationSeconds;
   final double distanceMeters;
   final List<List<double>> coordinates; // [[lat, lon], ...]
@@ -48,6 +52,9 @@ class RouteLeg {
     this.lineOrService,
     required this.departureStop,
     required this.arrivalStop,
+    this.departureStationCode,
+    this.arrivalStationCode,
+    this.crowdLevel = CrowdLevel.na,
     required this.durationSeconds,
     this.distanceMeters = 0.0,
     this.coordinates = const [],
@@ -74,6 +81,7 @@ class RoutePlan {
   final bool hasRainRisk;
   final bool usesShelteredWalkways;
   final RoutePlan? alternativeRoute; // Shown side-by-side
+  final Map<String, CrowdLevel> stationCrowds;
   final bool isSimulated;
 
   const RoutePlan({
@@ -90,8 +98,30 @@ class RoutePlan {
     this.hasRainRisk = false,
     this.usesShelteredWalkways = false,
     this.alternativeRoute,
+    this.stationCrowds = const {},
     this.isSimulated = false,
   });
+
+  /// Realistic ETA band with confidence interval instead of a single fake-precise number
+  String get etaBand {
+    switch (confidence) {
+      case ConfidenceLevel.green:
+        // High confidence: small realistic window e.g. 35 - 38 min
+        return '$totalDurationMinutes–${totalDurationMinutes + 3} min';
+      case ConfidenceLevel.amber:
+        // Moderate confidence: platform crowding or delay window
+        return '$totalDurationMinutes–${totalDurationMinutes + 8} min';
+      case ConfidenceLevel.red:
+        // Low confidence: major disruption with high uncertainty
+        return '$totalDurationMinutes–${totalDurationMinutes + 20}+ min';
+    }
+  }
+
+  /// Calculates the time difference compared to the alternative/original route (in minutes)
+  int? get delayDifferenceMinutes {
+    if (alternativeRoute == null) return null;
+    return totalDurationMinutes - alternativeRoute!.totalDurationMinutes;
+  }
 
   /// All transit lines used in this route
   List<String> get transitLinesUsed => legs
@@ -133,3 +163,4 @@ class RoutePlan {
     return coords;
   }
 }
+

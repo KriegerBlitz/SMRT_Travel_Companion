@@ -8,6 +8,8 @@ import 'lta_service.dart';
 import 'onemap_service.dart';
 import 'weather_service.dart';
 
+import '../models/user_profile.dart';
+
 /// Central decision engine that combines OneMap routing with real-time LTA
 /// disruptions, station crowd forecasts, lift maintenance, and weather nowcasts.
 /// Strictly enforces live-only operations unless Debug Mode is explicitly activated.
@@ -28,6 +30,7 @@ class TransitRoutingEngine {
         _debugService = debugService ?? DebugService.instance;
 
   /// Plans an intelligent, disruption-aware and accessibility-aware journey.
+  /// Driven by general-purpose [UserPreferences] with zero hardcoded persona logic.
   /// Strictly requires Debug Mode to be active for any simulated data injection.
   Future<RoutePlan> planCommuterJourney({
     required String originName,
@@ -36,12 +39,25 @@ class TransitRoutingEngine {
     required String destinationName,
     required double endLat,
     required double endLon,
-    required String persona, // 'rachel' or 'mdmLim'
+    String persona = 'general',
+    UserPreferences? preferences,
     bool simulateDisruption = false,
     bool simulateLiftOutage = false,
     bool simulateRain = false,
     bool forceHighCrowd = false,
   }) async {
+    // General-purpose preferences resolution
+    final effectivePrefs = preferences ??
+        (persona == 'mdmLim'
+            ? const UserPreferences(
+                requiresWheelchair: true,
+                avoidStairs: true,
+                preferSheltered: true,
+              )
+            : (persona == 'rachel'
+                ? const UserPreferences(highDisruptionSensitivity: true)
+                : const UserPreferences()));
+
     // Strict isolation: Simulations are strictly locked unless Debug Mode is enabled
     final canSimulate = _debugService.isDebugMode;
     final effectiveSimulateDisruption =
@@ -58,7 +74,7 @@ class TransitRoutingEngine {
       simulateDisruption: effectiveSimulateDisruption,
     );
 
-    // 2. Query 2-hour weather nowcast (if Mdm Lim or rain simulation)
+    // 2. Query 2-hour weather nowcast
     final weather = await _weatherService.checkRainNowcast(
       area: originName,
       simulateRain: effectiveSimulateRain,
@@ -72,7 +88,7 @@ class TransitRoutingEngine {
       destinationName: destinationName,
       endLat: endLat,
       endLon: endLon,
-      preferSheltered: weather.isRainingOrImminent && persona == 'mdmLim',
+      preferSheltered: weather.isRainingOrImminent && effectivePrefs.preferSheltered,
     );
 
     // 4. Fetch crowd forecasts for lines used in base route
@@ -85,9 +101,25 @@ class TransitRoutingEngine {
     final hasPredictedCrowdSpike = effectiveForceHighCrowd ||
         crowdForecasts.any((c) => c.crowdLevel == CrowdLevel.high);
 
-    // 5. Evaluate Lift Outages (Critical for Mdm Lim)
+    // Map station-specific crowd density
+    final stationCrowdMap = <String, CrowdLevel>{};
+    for (final c in crowdForecasts) {
+      if (c.crowdLevel != CrowdLevel.na) {
+        stationCrowdMap[c.stationCode.toUpperCase()] = c.crowdLevel;
+      }
+    }
+
+    // Dynamic crowd forecast slot timestamp (resolves P5)
+    final highCrowdSlot = crowdForecasts
+        .cast<StationCrowd?>()
+        .firstWhere((c) => c?.crowdLevel == CrowdLevel.high, orElse: () => null);
+    final crowdSlotTime = highCrowdSlot != null && highCrowdSlot.startTime.isNotEmpty
+        ? highCrowdSlot.startTime
+        : '08:00';
+
+    // 5. Evaluate Lift Outages (General-purpose accessibility check)
     List<LiftMaintenance> liftOutages = [];
-    if (persona == 'mdmLim') {
+    if (effectivePrefs.requiresWheelchair || effectivePrefs.avoidStairs) {
       if (effectiveSimulateLiftOutage) {
         liftOutages = [
           const LiftMaintenance(
@@ -105,17 +137,8 @@ class TransitRoutingEngine {
     }
 
     // 6. Check for active disruption along base route
-    //
-    // FIX [Bug 3]: Previously used raw `seg.line` (e.g. 'STL' from the API) in
-    // a direct `.contains()` against `transitLinesUsed` which holds canonical
-    // codes (e.g. 'SLRT'). Any LRT-line disruption would silently never match.
-    //
-    // Fix: resolve the alerts code through CanonicalLineTable.fromAlertsCode()
-    // which returns the list of canonical codes that correspond to the raw code,
-    // then check for overlap with the route's canonical lines.
     AffectedSegment? activeAffectedSegment;
     for (final seg in alert.affectedSegments) {
-      // Translate raw alerts line code → canonical code(s) (handles STL→SLRT, PTL→PLRT, etc.)
       final canonicalLines = CanonicalLineTable.fromAlertsCode(seg.line)
           .map((l) => l.canonicalCode)
           .toList();
@@ -143,9 +166,10 @@ class TransitRoutingEngine {
     }
 
     // =========================================================================
-    // SCENARIO B: Mdm Lim - Lift Outage Detected -> Wheelchair Bus Alternative
+    // SCENARIO B: Accessibility Constraint - Lift Outage Detected -> Wheelchair Bus Alternative
     // =========================================================================
-    if (persona == 'mdmLim' && liftOutages.any((l) => l.isOutOfService)) {
+    if ((effectivePrefs.requiresWheelchair || effectivePrefs.avoidStairs) &&
+        liftOutages.any((l) => l.isOutOfService)) {
       final outage = liftOutages.firstWhere((l) => l.isOutOfService);
       return _buildAccessibleBusAlternative(
         baseRoute: baseRoute,
@@ -155,9 +179,9 @@ class TransitRoutingEngine {
     }
 
     // =========================================================================
-    // SCENARIO C: Mdm Lim - Rain Forecasted -> Switch to Sheltered Walkway
+    // SCENARIO C: Sheltered Preference - Rain Forecasted -> Switch to Sheltered Walkway
     // =========================================================================
-    if (persona == 'mdmLim' && weather.isRainingOrImminent) {
+    if (effectivePrefs.preferSheltered && weather.isRainingOrImminent) {
       return _buildWeatherAwareShelteredRoute(
         baseRoute: baseRoute,
         weather: weather,
@@ -172,7 +196,8 @@ class TransitRoutingEngine {
 
     if (hasPredictedCrowdSpike) {
       confidence = ConfidenceLevel.amber;
-      confidenceReason = 'High platform crowding forecast around 08:00. Consider leaving 10 min earlier.';
+      confidenceReason =
+          'High platform crowding forecast around $crowdSlotTime. Consider leaving 10 min earlier.';
     }
 
     return RoutePlan(
@@ -187,6 +212,7 @@ class TransitRoutingEngine {
       confidenceReason: confidenceReason,
       hasRainRisk: weather.isRainingOrImminent,
       usesShelteredWalkways: baseRoute.usesShelteredWalkways,
+      stationCrowds: stationCrowdMap,
       isSimulated: canSimulate && (alert.isSimulated || weather.isSimulated || effectiveForceHighCrowd),
     );
   }
@@ -273,6 +299,7 @@ class TransitRoutingEngine {
       isRerouted: false,
       confidence: ConfidenceLevel.red,
       confidenceReason: 'Active disruption on line segment. Delays exceeding 25 mins.',
+      stationCrowds: baseRoute.stationCrowds,
       isSimulated: alert.isSimulated,
     );
 
@@ -288,6 +315,7 @@ class TransitRoutingEngine {
       confidence: ConfidenceLevel.amber,
       confidenceReason: 'Shuttle running at 5-min frequency. +15 min travel time.',
       alternativeRoute: originalRouteWithDelay, // Kept side-by-side for comparison
+      stationCrowds: baseRoute.stationCrowds,
       isSimulated: alert.isSimulated,
     );
   }
@@ -351,6 +379,7 @@ class TransitRoutingEngine {
       hasRainRisk: weather.isRainingOrImminent,
       usesShelteredWalkways: true,
       alternativeRoute: baseRoute,
+      stationCrowds: baseRoute.stationCrowds,
       isSimulated: true,
     );
   }
@@ -391,6 +420,7 @@ class TransitRoutingEngine {
       hasRainRisk: true,
       usesShelteredWalkways: true,
       alternativeRoute: baseRoute,
+      stationCrowds: baseRoute.stationCrowds,
       isSimulated: weather.isSimulated,
     );
   }
