@@ -27,13 +27,17 @@ class LandingHeroGraphic extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      child: SvgPicture.asset(
-        assetPath,
-        // SVG fill is black — invert to white for the dark background
-        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-        fit: BoxFit.contain,
+      child: Transform.scale(
+        scale: 1.10,
         alignment: Alignment.bottomCenter,
-        placeholderBuilder: (_) => const DefaultLandingTypography(),
+        child: SvgPicture.asset(
+          assetPath,
+          // SVG fill is black — invert to white for the dark background
+          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          fit: BoxFit.fitWidth,
+          alignment: Alignment.bottomCenter,
+          placeholderBuilder: (_) => const DefaultLandingTypography(),
+        ),
       ),
     );
   }

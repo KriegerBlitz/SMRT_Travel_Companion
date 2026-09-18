@@ -99,6 +99,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
             // 3. Foreground Content & Typography
             SafeArea(
+              bottom: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -157,13 +158,11 @@ class _LandingScreenState extends State<LandingScreen> {
                   // Push content down to the bottom
                   const Spacer(),
 
-                  // Modular Landing Hero (Touches the left & right edges of the mobile window)
+                  // Modular Landing Hero (Touches the left, right & bottom edges of the mobile window)
                   const Flexible(
                     fit: FlexFit.loose,
                     child: LandingHeroGraphic(),
                   ),
-
-                  const SizedBox(height: 8),
                 ],
               ),
             ),
