@@ -25,7 +25,7 @@ class LandingHeroGraphic extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Transform.scale(
-        scale: 1.05,
+        scale: 0.98,
         alignment: Alignment.bottomCenter,
         child: SvgPicture.asset(
           assetPath,
