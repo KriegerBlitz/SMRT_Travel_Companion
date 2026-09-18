@@ -8,8 +8,16 @@
 
 ## 🚀 Currently Working Features (Logic & Architecture)
 
-### 1. Canonical Transit Network & Line-Code Reconciliation Table
-- **File**: [`lib/core/transit/canonical_line_table.dart`](lib/core/transit/canonical_line_table.dart)
+### 1. Canonical Transit Network & Complete 182-Station Database
+- **Files**: [`lib/core/transit/canonical_line_table.dart`](lib/core/transit/canonical_line_table.dart), [`assets/data/all_mrt_stations.json`](assets/data/all_mrt_stations.json)
+- **Complete Island-Wide Coverage**:
+  - Expanded from initial sample to **all 182 operational Singapore MRT and LRT stations**:
+    - East-West Line (`EWL`), Changi Airport Branch (`CGL`), North-South Line (`NSL`), North East Line (`NEL`), Circle Line & Extension (`CCL`, `CEL`), Downtown Line (`DTL`), Thomson-East Coast Line (`TEL`), Bukit Panjang LRT (`BPL`), Sengkang LRT (`SLRT`), Punggol LRT (`PLRT`).
+  - Derived from official URA Master Plan Rail Station polygon centroids ([`AmendmenttoMP2014RailStation.geojson`](assets/data/AmendmenttoMP2014RailStation.geojson)) and verified OpenStreetMap GIS nodes.
+- **Elevation Classification (`GroundLevel`)**:
+  - Every single station classified into official `underground` and `aboveGround` designations.
+  - Normalizer handles dataset variations (`at-grade`, `elevated`, `subsurface`, `underground`).
+  - Powers dead-reckoning logic when entering subterranean transit environments where satellite/cellular signals degrade.
 - **Problem Solved**: Reconciles DataMall line code mismatches before joining data:
   | Transit Line | TrainServiceAlerts Code | Station Crowd Density (PCD) Code | Canonical Code |
   | :--- | :---: | :---: | :---: |
@@ -17,30 +25,42 @@
   | **Punggol LRT** | `PTL` | `PLRT` | `PLRT` |
   | **Circle Line Extension** | `CCL` *(folded)* | `CEL` *(separate)* | `CEL` |
   | **Changi Airport Branch** | `EWL` *(folded)* | `CGL` *(separate)* | `CGL` |
-- **`GroundLevel` Enum**:
-  - Matches official LTA Master Plan categories: `underground` and `aboveGround`.
-  - Flexible normalizer parses `'at-grade'`, `'at_grade'`, `'elevated'`, `'underground'`, and `'subsurface'` seamlessly.
-  - `isUnderground` property powers dead-reckoning offline logic when GPS/cellular signals degrade underground.
-- **Singapore Transit Database**:
-  - Accurate lat/lon coordinates, station codes, lines, exits, and elevation for Rachel (`Tampines`, `Raffles Place`), Mdm Lim (`Bedok`, `Outram Park` for SGH), and key transfer hubs.
 
 ---
 
-### 2. OpenStreetMap Geospatial Base (Leaflet in Flutter Web)
-- **Files**: [`web/leaflet_bridge.js`](web/leaflet_bridge.js), [`lib/core/map/leaflet_map_view.dart`](lib/core/map/leaflet_map_view.dart), [`lib/core/map/leaflet_web_impl.dart`](lib/core/map/leaflet_web_impl.dart)
-- **Leaflet Integration**: Embedded in Flutter Web via `HtmlElementView` and `dart:ui_web`.
+### 2. Authentic Real-World Curved Railway Tracks & Geospatial Map Engine
+- **Files**: [`web/leaflet_bridge.js`](web/leaflet_bridge.js), [`web/mrt_data.js`](web/mrt_data.js), [`assets/data/mrt_track_geometries.json`](assets/data/mrt_track_geometries.json), [`lib/core/map/leaflet_map_view.dart`](lib/core/map/leaflet_map_view.dart), [`lib/core/map/leaflet_web_impl.dart`](lib/core/map/leaflet_web_impl.dart)
+- **Real Curved Railway Track Alignments**:
+  - Traces the actual physical viaduct curves, tunnels, and line tracks using **~8,700 real-world GPS coordinates** extracted from OpenStreetMap relations/ways.
+  - Multi-polyline rendering with dual-layer styling: high-contrast dark outer halo casing (`#0a0f1d`) + vibrant transit core lines.
+- **Multicolor Pie-Chart Interchange Markers**:
+  - Interchanges serving 2+ lines are dynamically rendered as multicolor pie charts using CSS `conic-gradient`, with slices proportional to each line served (e.g. Dhoby Ghaut, Raffles Place, Outram Park, Jurong East, Bishan), accented with a crisp white border and white center dot.
+  - Normal stations are rendered as solid circles matching their line color.
+- **Interactive Station Popups**:
+  - Tapping any station reveals its name, all assigned station codes, badges for lines served, underground/elevated designation, and quick-action routing buttons (*"From here"* / *"To here"*).
 - **Hard License Compliance**: Permanent, unremovable `"© OpenStreetMap contributors"` attribution displayed both in Leaflet tiles and as a persistent Flutter UI overlay badge.
-- **Multi-Colored Segment Polylines**:
-  - **Normal Operation**: Solid Emerald Green (`#059669`).
+- **Dynamic Route & Walkway Layers**:
+  - **Normal Transit**: Solid Emerald Green (`#059669`).
   - **Disrupted Segments**: High-visibility dashed Red/Orange warning (`#dc2626`).
   - **Alternative Reroutes**: Dashed Sky Blue line (`#0284c7`).
-- **Station Crowding Dots**: 3-level color indicators directly on station markers (Low = Green, Moderate = Amber, High = Red).
-- **Sheltered Walkways**: Renders `CoveredLinkWay` paths for weather-aware routing.
-- **Compilation Verified**: Builds cleanly with `flutter build web` in 11.5s.
+  - **Sheltered Walkways**: Renders `CoveredLinkWay` paths for weather-aware routing.
 
 ---
 
-### 3. LTA DataMall Integration Service
+### 3. Modern, Sleek, Minimalist UI Architecture
+- **Files**: [`lib/features/landing/landing_screen.dart`](lib/features/landing/landing_screen.dart), [`lib/features/home/home_screen.dart`](lib/features/home/home_screen.dart)
+- **Landing Screen**:
+  - Dark glassmorphic aesthetic with custom high-contrast typography ("Where to NEXT?").
+  - Seamless tap-anywhere transition to Home, with keyboard event listener support.
+- **Home Screen**:
+  - Minimalist `[placeholder [->]]` natural language journey query box with greyed placeholder and single arrow submit action.
+  - Elegant white-gradient title typography for "LIVE NOWCAST" and search elements.
+  - Real-time weather badge with live dynamic weather emoji and temperature.
+  - Clean floating map touch controls positioned conveniently near the bottom action area.
+
+---
+
+### 4. LTA DataMall Integration Service
 - **Files**: [`lib/core/services/lta_service.dart`](lib/core/services/lta_service.dart), [`lib/core/models/`](lib/core/models/)
 - **`TrainServiceAlerts`**:
   - Parses nested `AffectedSegments`, directions, station codes, and advisory text.
@@ -56,22 +76,24 @@
 
 ---
 
-### 4. data.gov.sg 2-Hour Weather Nowcast
+### 5. data.gov.sg 2-Hour Weather Nowcast
 - **File**: [`lib/core/services/weather_service.dart`](lib/core/services/weather_service.dart)
 - Live government weather nowcast API (no API key required).
 - Detects rain/thunderstorms for Singapore towns (e.g. Bedok, Outram, Tampines) to proactively reroute Mdm Lim through sheltered walkways.
 
 ---
 
-### 5. OneMap Multi-Modal Door-to-Door Routing
+### 6. OneMap Multi-Modal Door-to-Door Routing
 - **File**: [`lib/core/services/onemap_service.dart`](lib/core/services/onemap_service.dart)
 - Complete door-to-door paths including origin and destination walking legs, not just station-to-station.
 - High-fidelity baseline paths for Rachel and Mdm Lim.
 
 ---
 
-### 6. Central Transit Routing & Decision Engine
-- **File**: [`lib/core/services/transit_routing_engine.dart`](lib/core/services/transit_routing_engine.dart)
+### 7. Central Transit Routing & Decision Engine
+- **File**: [`lib/core/services/transit_routing_engine.dart`](lib/core/services/transit_routing_engine.dart), [`lib/core/services/natural_language_route_service.dart`](lib/core/services/natural_language_route_service.dart)
+- **Natural Language Parsing**:
+  - Parses queries like *"Take me from Tampines to Raffles Place"* or *"From Bedok to SGH"* across all 182 stations.
 - **Automatic Disruption Rerouting**:
   - Automatically incorporates official LTA mitigation services (`FreeMRTShuttle` / `FreePublicBus`) as the suggested route.
   - Explains the change in one concise line.
@@ -86,25 +108,31 @@
 
 ---
 
-### 7. Dedicated Debug & Simulation Controller (`DebugService`)
-- **File**: [`lib/core/debug/debug_service.dart`](lib/core/debug/debug_service.dart)
+### 8. Dedicated Debug & Simulation Controller (`DebugService` & Konami Code)
+- **Files**: [`lib/core/debug/debug_service.dart`](lib/core/debug/debug_service.dart), [`lib/core/debug/konamicode.dart`](lib/core/debug/konamicode.dart)
 - **Strict Competition Isolation**:
   - `isDebugMode = false` by default (Strict Live Mode).
   - When Debug Mode is OFF, all simulation flags are completely locked and neutralized. The app strictly hits live endpoints or reports live empty states.
-  - When Debug Mode is explicitly activated, the judge/developer can toggle specific scenario replays:
-    * `simulateDisruption`: Injects EWL signalling fault + Free MRT Shuttle.
-    * `simulateLiftOutage`: Injects Outram Park Exit 7 lift maintenance + Bus 197 WAB alternative.
-    * `simulateRainNowcast`: Injects 2-hour rain nowcast + CoveredLinkWay sheltered walkway.
-    * `simulateCrowdSurge`: Injects platform crowding surge + proactive leave-earlier advice.
-    * `deadReckoningTimer`: Controls underground elapsed countdown timer.
-  - Every simulated response automatically sets `isSimulated = true` with active scenario audit tags.
+- **Secret Konami Code Activation**:
+  - Pressing `↑ ↑ ↓ ↓ ← → ← → B A` instantly activates/deactivates the debug simulation harness with zero UI clutter for normal users.
+- **Scenario Replay Controls**:
+  * `simulateDisruption`: Injects EWL signalling fault + Free MRT Shuttle.
+  * `simulateLiftOutage`: Injects Outram Park Exit 7 lift maintenance + Bus 197 WAB alternative.
+  * `simulateRainNowcast`: Injects 2-hour rain nowcast + CoveredLinkWay sheltered walkway.
+  * `simulateCrowdSurge`: Injects platform crowding surge + proactive leave-earlier advice.
+  * `deadReckoningTimer`: Controls underground elapsed countdown timer.
 
 ---
 
-### 8. Automated Testing & Verification
-- **Test Files**: [`test/canonical_line_table_test.dart`](test/canonical_line_table_test.dart), [`test/transit_services_test.dart`](test/transit_services_test.dart)
-- **14/14 Unit Tests Passing** including strict competition isolation validation.
-- **Static Analysis**: `flutter analyze` reports **0 issues**.
+### 9. Comprehensive Automated Testing & Verification
+- **Test Files**: 
+  - [`test/canonical_line_table_test.dart`](test/canonical_line_table_test.dart)
+  - [`test/transit_services_test.dart`](test/transit_services_test.dart)
+  - [`test/debug_service_test.dart`](test/debug_service_test.dart)
+  - [`test/konami_code_test.dart`](test/konami_code_test.dart)
+  - [`test/landing_screen_test.dart`](test/landing_screen_test.dart)
+  - [`test/home_screen_test.dart`](test/home_screen_test.dart)
+- **31/31 Unit & Widget Tests Passing** verifying data reconciliation, elevation, UI transitions, search box aesthetics, and strict simulation isolation.
 
 ---
 
@@ -129,7 +157,7 @@ flutter test
 
 ### Building for Web Production
 ```bash
-flutter build web
+flutter build web --release
 ```
 
 ---
@@ -146,6 +174,5 @@ flutter build web
    - Implement step/timer-based dead-reckoning simulation for underground MRT platforms where GPS/cellular signals degrade, maintaining commuter location tracking.
 4. **Custom Canva Hero Typography Asset**:
    - Replace the current landing page typography component ([`LandingHeroGraphic`](lib/features/landing/widgets/landing_hero_graphic.dart)) with the custom Canva graphic once exported.
-5. **Interactive Station Details & Platform Crowd Inspection**:
-   - Tapping individual MRT station dots on the Leaflet map opens an interactive card showing real-time platform crowding (PCD), lift operational status, and upcoming bus arrivals (WAB).
+
 
