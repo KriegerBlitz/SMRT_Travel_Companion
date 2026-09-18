@@ -152,55 +152,45 @@ class _LandingScreenState extends State<LandingScreen> {
                           Text(
                             'Where',
                             style: GoogleFonts.playfairDisplay(
-                              fontSize: 52,
+                              fontSize: 54,
                               fontWeight: FontWeight.w700,
                               fontStyle: FontStyle.italic,
                               color: Colors.white,
                               letterSpacing: -1.2,
+                              height: 0.95,
                             ),
                           ),
                           const SizedBox(width: 14),
                           Text(
                             'to',
                             style: GoogleFonts.greatVibes(
-                              fontSize: 54,
+                              fontSize: 56,
                               fontWeight: FontWeight.w400,
                               color: Colors.white,
+                              height: 0.95,
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 2),
-
-                    // "NEXT?" as wide as the cutout, bold NEXT, unbolded ?
-                    SizedBox(
-                      width: double.infinity,
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        alignment: Alignment.centerLeft,
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'NEXT',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 120,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: -2.0,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '?',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 120,
-                                  fontWeight: FontWeight.w300, // Light / non-bold
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                    // Tightly stacked "NEXT?" in ultra-tall Bebas Neue font, bold, full width
+                    Transform.translate(
+                      offset: const Offset(0, -6),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FittedBox(
+                          fit: BoxFit.fitWidth,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'NEXT?',
+                            style: GoogleFonts.bebasNeue(
+                              fontSize: 160,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                              height: 0.85,
+                            ),
                           ),
                         ),
                       ),

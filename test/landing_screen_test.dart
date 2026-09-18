@@ -18,10 +18,7 @@ void main() {
       // Verify words are present
       expect(find.text('Where'), findsOneWidget);
       expect(find.text('to'), findsOneWidget);
-      expect(
-        find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains('NEXT')),
-        findsOneWidget,
-      );
+      expect(find.text('NEXT?'), findsOneWidget);
       expect(find.text('SMRT · COMPANION'), findsOneWidget);
     });
 
@@ -47,10 +44,7 @@ void main() {
 
       // Initially on LandingScreen
       expect(find.text('Where'), findsOneWidget);
-      expect(
-        find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains('NEXT')),
-        findsOneWidget,
-      );
+      expect(find.text('NEXT?'), findsOneWidget);
 
       // Tap to transition
       await tester.tap(find.byType(GestureDetector).first);
