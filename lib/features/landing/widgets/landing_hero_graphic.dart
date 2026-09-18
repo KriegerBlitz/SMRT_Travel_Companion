@@ -19,24 +19,21 @@ class LandingHeroGraphic extends StatelessWidget {
     this.customAssetPath,
   });
 
-  static const String _defaultSvgPath = 'assets/data/NEXT.svg';
+  static const String _defaultSvgPath = 'assets/NEXT.svg';
 
   @override
   Widget build(BuildContext context) {
     final assetPath = customAssetPath ?? _defaultSvgPath;
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 280),
-      child: SizedBox(
-        width: double.infinity,
-        child: SvgPicture.asset(
-          assetPath,
-          // SVG fill is black — invert to white for the dark background
-          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-          fit: BoxFit.contain,
-          alignment: Alignment.bottomLeft,
-          placeholderBuilder: (_) => const DefaultLandingTypography(),
-        ),
+    return SizedBox(
+      width: double.infinity,
+      child: SvgPicture.asset(
+        assetPath,
+        // SVG fill is black — invert to white for the dark background
+        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+        fit: BoxFit.contain,
+        alignment: Alignment.bottomCenter,
+        placeholderBuilder: (_) => const DefaultLandingTypography(),
       ),
     );
   }
@@ -55,13 +52,15 @@ class DefaultLandingTypography extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // "Where" and "to" side by side
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
               Text(
                 'Where',
                 style: GoogleFonts.playfairDisplay(
@@ -86,6 +85,7 @@ class DefaultLandingTypography extends StatelessWidget {
             ],
           ),
         ),
+      ),
 
         // Tightly stacked "NEXT?" in ultra-tall Bebas Neue font, bold, full width
         Transform.translate(

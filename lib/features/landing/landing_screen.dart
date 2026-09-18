@@ -97,66 +97,74 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
             ),
 
-            // 3. Foreground Content & Typography (Bottom & Left Justified)
+            // 3. Foreground Content & Typography
             SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top Brand Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top Brand Badge & Attribution (Padded within mobile frame)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.20),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xFF00D26A), // SMRT green beacon
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'SMRT · COMPANION',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.6,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF00D26A), // SMRT green beacon
-                            ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '© OneMap · © OpenStreetMap contributors',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white.withValues(alpha: 0.50),
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'SMRT · COMPANION',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '© OneMap · © OpenStreetMap contributors',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white.withValues(alpha: 0.50),
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                  ),
 
-                    // Push content down to the bottom
-                    const Spacer(),
+                  // Push content down to the bottom
+                  const Spacer(),
 
-                    // Modular Landing Hero (Typography or future custom Canva graphic)
-                    const LandingHeroGraphic(),
+                  // Modular Landing Hero (Touches the left & right edges of the mobile window)
+                  const Flexible(
+                    fit: FlexFit.loose,
+                    child: LandingHeroGraphic(),
+                  ),
 
-                    const SizedBox(height: 12),
-                  ],
-                ),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
           ],

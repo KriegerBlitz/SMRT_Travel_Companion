@@ -82,6 +82,8 @@ class _MainNavigationRootState extends State<MainNavigationRoot> {
   }
 }
 
+/// STRICTLY DO NOT TOUCH: The entire app is strictly locked to vertical mobile aspect ratio
+/// (max 430px wide) across all desktop and mobile screens. Do not remove or alter this framing.
 /// Locks aspect ratio to vertical mobile format on wider desktop screens
 /// with ambient matte-dark pillarbox bars on the sides.
 class MobileViewportContainer extends StatelessWidget {
