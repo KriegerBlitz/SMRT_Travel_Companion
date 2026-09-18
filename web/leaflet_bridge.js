@@ -63,6 +63,26 @@
     },
 
     /**
+     * Zooms the map in by 1 level
+     */
+    zoomIn: function (containerId) {
+      const map = mapInstances[containerId];
+      if (map) {
+        map.zoomIn();
+      }
+    },
+
+    /**
+     * Zooms the map out by 1 level
+     */
+    zoomOut: function (containerId) {
+      const map = mapInstances[containerId];
+      if (map) {
+        map.zoomOut();
+      }
+    },
+
+    /**
      * Toggles CSS blur effect on the map container
      */
     setBlurred: function (containerId, blurred) {

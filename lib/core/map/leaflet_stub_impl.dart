@@ -47,6 +47,8 @@ class LeafletPlatformMap extends StatelessWidget {
 }
 
 void bridgeSetView(String id, double lat, double lng, double? zoom) {}
+void bridgeZoomIn(String id) {}
+void bridgeZoomOut(String id) {}
 void bridgeClearLayers(String id) {}
 void bridgeInvalidateSize(String id) {}
 void bridgeSetBlurred(String id, bool blurred) {}

@@ -59,7 +59,15 @@ class _MainNavigationRootState extends State<MainNavigationRoot> {
       transitionBuilder: (child, animation) {
         return FadeTransition(
           opacity: animation,
-          child: child,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              ),
+            ),
+            child: child,
+          ),
         );
       },
       child: _showingLandingPage

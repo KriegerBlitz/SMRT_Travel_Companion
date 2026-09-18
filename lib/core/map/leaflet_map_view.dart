@@ -24,6 +24,24 @@ class LeafletMapController {
     } catch (_) {}
   }
 
+  /// Zooms in by 1 level
+  void zoomIn() {
+    final id = _containerId;
+    if (id == null || !kIsWeb) return;
+    try {
+      platform.bridgeZoomIn(id);
+    } catch (_) {}
+  }
+
+  /// Zooms out by 1 level
+  void zoomOut() {
+    final id = _containerId;
+    if (id == null || !kIsWeb) return;
+    try {
+      platform.bridgeZoomOut(id);
+    } catch (_) {}
+  }
+
   /// Clears dynamic markers, routes, and overlays
   void clearLayers() {
     final id = _containerId;

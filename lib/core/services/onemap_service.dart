@@ -134,6 +134,83 @@ class OneMapService {
         originName.toLowerCase().contains('tampines') ||
         destinationName.toLowerCase().contains('raffles');
 
+    final isBugisHarbourFront =
+        (originName.toLowerCase().contains('bugis') &&
+         (destinationName.toLowerCase().contains('harbour') || destinationName.toLowerCase().contains('harbor'))) ||
+        (destinationName.toLowerCase().contains('bugis') &&
+         (originName.toLowerCase().contains('harbour') || originName.toLowerCase().contains('harbor')));
+
+    if (isBugisHarbourFront) {
+      // Bugis -> HarbourFront: Downtown Line to Chinatown, then North East Line to HarbourFront
+      return RoutePlan(
+        id: 'bugis-harbourfront-wheelchair-route',
+        origin: 'Bugis Junction',
+        destination: 'HarbourFront Centre',
+        totalDurationMinutes: 24,
+        totalWalkDistanceMeters: 310.0,
+        confidence: ConfidenceLevel.green,
+        confidenceReason: 'All barrier-free lifts operational. Step-free accessible path.',
+        usesShelteredWalkways: preferSheltered,
+        legs: const [
+          RouteLeg(
+            mode: 'WALK',
+            departureStop: 'Bugis Junction (Victoria St)',
+            arrivalStop: 'Bugis MRT (DT14) Lift 1',
+            durationSeconds: 180, // 3 mins step-free roll
+            distanceMeters: 140.0,
+            instruction: 'Take step-free concourse ramp into Bugis MRT, take Lift 1 to Platform B',
+            coordinates: [
+              [1.3001, 103.8550],
+              [1.3005, 103.8558],
+            ],
+          ),
+          RouteLeg(
+            mode: 'SUBWAY',
+            lineOrService: 'DTL',
+            departureStop: 'Bugis (DT14)',
+            arrivalStop: 'Chinatown (DT19)',
+            durationSeconds: 480, // 8 mins
+            distanceMeters: 3200.0,
+            instruction: 'Board Downtown Line towards Bukit Panjang. Alight at Chinatown (DT19).',
+            coordinates: [
+              [1.3005, 103.8558],
+              [1.2968, 103.8524],
+              [1.2934, 103.8532],
+              [1.2825, 103.8527],
+              [1.2796, 103.8475],
+              [1.2845, 103.8440],
+            ],
+          ),
+          RouteLeg(
+            mode: 'SUBWAY',
+            lineOrService: 'NEL',
+            departureStop: 'Chinatown (NE4)',
+            arrivalStop: 'HarbourFront (NE1)',
+            durationSeconds: 420, // 7 mins
+            distanceMeters: 3600.0,
+            instruction: 'Take interchange lift to North East Line. Board towards HarbourFront (NE1).',
+            coordinates: [
+              [1.2845, 103.8440],
+              [1.2803, 103.8395],
+              [1.2654, 103.8222],
+            ],
+          ),
+          RouteLeg(
+            mode: 'WALK',
+            departureStop: 'HarbourFront MRT (NE1) Lift Exit B',
+            arrivalStop: 'HarbourFront Centre',
+            durationSeconds: 240, // 4 mins
+            distanceMeters: 170.0,
+            instruction: 'Take Exit B Lift directly to HarbourFront Centre Concourse Level 1',
+            coordinates: [
+              [1.2654, 103.8222],
+              [1.2645, 103.8214],
+            ],
+          ),
+        ],
+      );
+    }
+
     if (isRachelJourney) {
       // Rachel: Tampines home -> Tampines MRT (walk 4m) -> East-West Line -> Raffles Place MRT -> Office (walk 3m)
       return RoutePlan(

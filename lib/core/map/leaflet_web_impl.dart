@@ -13,6 +13,8 @@ class MRTLeafletBridgeJS {}
 extension MRTLeafletBridgeJSExtension on MRTLeafletBridgeJS {
   external bool initMap(String containerId, double lat, double lng, double zoom);
   external void setView(String containerId, double lat, double lng, double? zoom);
+  external void zoomIn(String containerId);
+  external void zoomOut(String containerId);
   external void clearLayers(String containerId);
   external void renderRoute(
     String containerId,
@@ -108,6 +110,14 @@ class _LeafletPlatformMapState extends State<LeafletPlatformMap> {
 
 void bridgeSetView(String id, double lat, double lng, double? zoom) {
   mrtLeafletBridge?.setView(id, lat, lng, zoom);
+}
+
+void bridgeZoomIn(String id) {
+  mrtLeafletBridge?.zoomIn(id);
+}
+
+void bridgeZoomOut(String id) {
+  mrtLeafletBridge?.zoomOut(id);
 }
 
 void bridgeClearLayers(String id) {

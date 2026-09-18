@@ -70,6 +70,19 @@ class WeatherService {
         text.contains('storm') ||
         text.contains('drizzle');
   }
+
+  /// Returns an appropriate weather emoji for the forecast description
+  static String getWeatherEmoji(String forecast) {
+    final text = forecast.toLowerCase();
+    if (text.contains('thunder') || text.contains('storm')) return '⛈️';
+    if (text.contains('heavy rain')) return '🌧️';
+    if (text.contains('rain') || text.contains('shower') || text.contains('drizzle')) return '🌦️';
+    if (text.contains('partly') || text.contains('passing')) return '⛅';
+    if (text.contains('cloud') || text.contains('overcast')) return '☁️';
+    if (text.contains('fair') || text.contains('sunny') || text.contains('clear')) return '☀️';
+    if (text.contains('hazy') || text.contains('mist') || text.contains('fog')) return '🌫️';
+    return '⛅';
+  }
 }
 
 class WeatherForecastResult {
@@ -85,6 +98,8 @@ class WeatherForecastResult {
     this.isSimulated = false,
   });
 
+  String get emoji => WeatherService.getWeatherEmoji(forecast);
+
   @override
-  String toString() => '$area: $forecast (Rain risk: $isRainingOrImminent)';
+  String toString() => '$area: $emoji $forecast (Rain risk: $isRainingOrImminent)';
 }
