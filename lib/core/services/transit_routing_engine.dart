@@ -3,6 +3,7 @@ import '../models/crowd_density.dart';
 import '../models/disruption_alert.dart';
 import '../models/facility_maintenance.dart';
 import '../models/route_plan.dart';
+import '../transit/canonical_line_table.dart'; // Needed for Bug 3 fix: line code normalisation
 import 'lta_service.dart';
 import 'onemap_service.dart';
 import 'weather_service.dart';
@@ -104,9 +105,24 @@ class TransitRoutingEngine {
     }
 
     // 6. Check for active disruption along base route
+    //
+    // FIX [Bug 3]: Previously used raw `seg.line` (e.g. 'STL' from the API) in
+    // a direct `.contains()` against `transitLinesUsed` which holds canonical
+    // codes (e.g. 'SLRT'). Any LRT-line disruption would silently never match.
+    //
+    // Fix: resolve the alerts code through CanonicalLineTable.fromAlertsCode()
+    // which returns the list of canonical codes that correspond to the raw code,
+    // then check for overlap with the route's canonical lines.
     AffectedSegment? activeAffectedSegment;
     for (final seg in alert.affectedSegments) {
-      final usesAffectedLine = baseRoute.transitLinesUsed.contains(seg.line);
+      // Translate raw alerts line code → canonical code(s) (handles STL→SLRT, PTL→PLRT, etc.)
+      final canonicalLines = CanonicalLineTable.fromAlertsCode(seg.line)
+          .map((l) => l.canonicalCode)
+          .toList();
+
+      final usesAffectedLine = baseRoute.transitLinesUsed
+          .any((routeLine) => canonicalLines.contains(routeLine));
+
       if (usesAffectedLine) {
         activeAffectedSegment = seg;
         break;

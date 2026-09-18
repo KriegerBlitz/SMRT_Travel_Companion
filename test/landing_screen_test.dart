@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travelcompanion/features/landing/landing_screen.dart';
+import 'package:travelcompanion/features/landing/widgets/landing_hero_graphic.dart';
 import 'package:travelcompanion/main.dart';
 
 void main() {
@@ -15,10 +16,8 @@ void main() {
         ),
       );
 
-      // Verify words are present
-      expect(find.text('Where'), findsOneWidget);
-      expect(find.text('to'), findsOneWidget);
-      expect(find.text('NEXT?'), findsOneWidget);
+      // Verify LandingHeroGraphic and brand badge are present
+      expect(find.byType(LandingHeroGraphic), findsOneWidget);
       expect(find.text('SMRT · COMPANION'), findsOneWidget);
     });
 
@@ -32,7 +31,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Where'));
+      await tester.tap(find.byType(GestureDetector).first);
       await tester.pump();
 
       expect(transitioned, isTrue);
@@ -43,8 +42,7 @@ void main() {
       await tester.pump();
 
       // Initially on LandingScreen
-      expect(find.text('Where'), findsOneWidget);
-      expect(find.text('NEXT?'), findsOneWidget);
+      expect(find.byType(LandingHeroGraphic), findsOneWidget);
 
       // Tap to transition
       await tester.tap(find.byType(GestureDetector).first);
@@ -60,7 +58,7 @@ void main() {
       await tester.pump();
 
       // Initially on LandingScreen
-      expect(find.text('Where'), findsOneWidget);
+      expect(find.byType(LandingHeroGraphic), findsOneWidget);
 
       // Send any key event
       await tester.sendKeyEvent(LogicalKeyboardKey.space);

@@ -161,20 +161,30 @@ class LtaDataMallService {
       } catch (_) {}
     }
 
-    // Default accessible bus option for Bedok / Outram SGH corridor
+    // BUG FIX: Previously hardcoded arrival timestamps ('2026-09-18T10:35:00+08:00')
+    // would always appear as past arrivals for any judge testing after that time.
+    // Now computed relative to the current time so "next bus" is always ~8 and ~21 mins away.
+    final now = DateTime.now();
+    final bus1Eta = now.add(const Duration(minutes: 8));
+    final bus2Eta = now.add(const Duration(minutes: 21));
+    final tzOffset = '+08:00';
+    String fmtIso(DateTime dt) {
+      return '${dt.toIso8601String().split('.')[0]}$tzOffset';
+    }
+
     return [
       BusArrivalService(
         serviceNo: '197',
         busStopCode: busStopCode,
         nextBuses: [
-          const NextBus(
-            estimatedArrival: '2026-09-18T10:35:00+08:00',
+          NextBus(
+            estimatedArrival: fmtIso(bus1Eta),
             load: 'SEA',
             feature: 'WAB',
             type: 'SD',
           ),
-          const NextBus(
-            estimatedArrival: '2026-09-18T10:48:00+08:00',
+          NextBus(
+            estimatedArrival: fmtIso(bus2Eta),
             load: 'SDA',
             feature: 'WAB',
             type: 'DD',

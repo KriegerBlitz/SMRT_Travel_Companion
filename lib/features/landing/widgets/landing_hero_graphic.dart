@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Modular Landing Hero Graphic.
 ///
-/// Designed for zero-friction replacement:
-/// - Defaults to the current editorial "Where to NEXT?" typography.
-/// - If a custom Canva image or vector asset is provided later, simply pass [customAssetPath].
+/// Now uses the actual [assets/data/NEXT.svg] Canva export.
+/// The SVG paths are black (#000000); a [ColorFilter] inverts them to white
+/// for the dark landing screen background.
+///
+/// [DefaultLandingTypography] is retained as a programmatic fallback in case
+/// the asset is unavailable, but is no longer the primary render path.
 class LandingHeroGraphic extends StatelessWidget {
-  /// Optional path to a future custom Canva asset (e.g. 'assets/images/where_to_next.png')
+  /// Optional path to a future custom Canva asset (defaults to 'assets/data/NEXT.svg')
   final String? customAssetPath;
 
   const LandingHeroGraphic({
@@ -15,20 +19,26 @@ class LandingHeroGraphic extends StatelessWidget {
     this.customAssetPath,
   });
 
+  static const String _defaultSvgPath = 'assets/data/NEXT.svg';
+
   @override
   Widget build(BuildContext context) {
-    if (customAssetPath != null) {
-      return SizedBox(
+    final assetPath = customAssetPath ?? _defaultSvgPath;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 280),
+      child: SizedBox(
         width: double.infinity,
-        child: Image.asset(
-          customAssetPath!,
+        child: SvgPicture.asset(
+          assetPath,
+          // SVG fill is black — invert to white for the dark background
+          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           fit: BoxFit.contain,
           alignment: Alignment.bottomLeft,
+          placeholderBuilder: (_) => const DefaultLandingTypography(),
         ),
-      );
-    }
-
-    return const DefaultLandingTypography();
+      ),
+    );
   }
 }
 

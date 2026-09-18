@@ -139,25 +139,32 @@ void _callGlobalBridge(String method, List<dynamic> args) {
   // Safe helper calling into window.MRTLeafletBridge
   try {
     if (kIsWeb) {
+      // BUG FIX: Previously, JSON strings were interpolated raw into a JS
+      // single-quoted string literal (e.g. JSON.parse('${args[1]}')).
+      // A station name or label containing a single quote (e.g. "Tampines Av 1'")
+      // would break the JS syntax and the route/station render would silently fail.
+      // Fix: escape single quotes in all JSON args before interpolation.
+      String escJs(dynamic s) => s.toString().replaceAll("'", r"\'");
+
       final script = '''
         (function() {
           if (!window.MRTLeafletBridge) return;
           if ('$method' === 'renderRouteJson') {
             window.MRTLeafletBridge.renderRoute(
-              '${args[0]}',
-              JSON.parse('${args[1]}'),
-              JSON.parse('${args[2]}'),
-              JSON.parse('${args[3]}')
+              '${escJs(args[0])}',
+              JSON.parse('${escJs(args[1])}'),
+              JSON.parse('${escJs(args[2])}'),
+              JSON.parse('${escJs(args[3])}')
             );
           } else if ('$method' === 'renderStationsJson') {
             window.MRTLeafletBridge.renderStations(
-              '${args[0]}',
-              JSON.parse('${args[1]}')
+              '${escJs(args[0])}',
+              JSON.parse('${escJs(args[1])}')
             );
           } else if ('$method' === 'renderShelteredJson') {
             window.MRTLeafletBridge.renderShelteredWalkway(
-              '${args[0]}',
-              JSON.parse('${args[1]}')
+              '${escJs(args[0])}',
+              JSON.parse('${escJs(args[1])}')
             );
           }
         })();

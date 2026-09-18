@@ -18,16 +18,28 @@ class LiftMaintenance {
     this.estimatedResumptionDate,
   });
 
-  /// Lift is down or undergoing maintenance
+  /// Lift is down or undergoing maintenance.
+  ///
+  /// FIX [Bug 1]: The previous implementation used `!s.contains('operational')`
+  /// as a catch-all final clause, which falsely flagged empty strings, 'Unknown',
+  /// or any unrecognised status as out-of-service. This could misfired on live
+  /// API data where the field is absent or uses an unexpected value.
+  ///
+  /// Fixed with an explicit keyword allowlist: only known outage phrases return
+  /// true. Anything else (empty, 'Unknown', or genuinely operational) returns
+  /// false — treating ambiguous statuses as in-service by default.
   bool get isOutOfService {
-    final s = status.toLowerCase();
+    final s = status.toLowerCase().trim();
+    // Empty or unrecognised status → assume operational (safe default)
+    if (s.isEmpty) return false;
+    // Explicit out-of-service keyword allowlist
     return s.contains('out of service') ||
         s.contains('down') ||
         s.contains('maintenance') ||
         s.contains('repair') ||
         s.contains('inoperative') ||
-        s.contains('overhaul') ||
-        !s.contains('operational');
+        s.contains('overhaul');
+    // NOTE: Removed `!s.contains('operational')` — that clause was the bug.
   }
 
   factory LiftMaintenance.fromJson(Map<String, dynamic> json) {

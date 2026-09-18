@@ -132,7 +132,7 @@
   - [`test/konami_code_test.dart`](test/konami_code_test.dart)
   - [`test/landing_screen_test.dart`](test/landing_screen_test.dart)
   - [`test/home_screen_test.dart`](test/home_screen_test.dart)
-- **31/31 Unit & Widget Tests Passing** verifying data reconciliation, elevation, UI transitions, search box aesthetics, and strict simulation isolation.
+- **41/41 Unit & Widget Tests Passing** verifying data reconciliation, elevation, UI transitions, search box aesthetics, and strict simulation isolation.
 
 ---
 
@@ -159,6 +159,21 @@ flutter test
 ```bash
 flutter build web --release
 ```
+
+---
+
+## 🧩 Placeholders & Outstanding TODOs
+
+> These are **intentional stubs** left in the codebase as markers for future implementation.
+> They are not bugs. Do not remove them — they define the next steps.
+
+| # | Location | Placeholder | What needs implementing |
+|---|---|---|---|
+| P1 | [`route_preview_sheet.dart:131`](lib/features/home/widgets/route_preview_sheet.dart#L131) | `"Journey logic planned. Full journey page will be implemented next!"` | The full Journey Page (see Roadmap item 3 below) — this banner should become a tappable "View Full Journey →" CTA once that page exists |
+| P2 | [`home_screen.dart:157`](lib/features/home/home_screen.dart#L157) | `widget.onNavigateToJourney?.call(result)` | The `onNavigateToJourney` callback is wired but has no destination — needs a Journey Page route pushed onto the Navigator |
+| P3 | [`landing_hero_graphic.dart`](lib/features/landing/widgets/landing_hero_graphic.dart) | Integrated with `assets/data/NEXT.svg` | Completed: Uses `flutter_svg` to render Canva hero graphic with white color filter and graceful fallback |
+| P4 | [`home_screen.dart:61-64`](lib/features/home/home_screen.dart#L61) | Station popup fills search bar with hardcoded `"to Harborfront on Wheelchair"` / `"Bugis to $name"` | Should resolve the actual origin/destination from the user's current journey context rather than a hardcoded string |
+| P5 | [`transit_routing_engine.dart:175`](lib/core/services/transit_routing_engine.dart#L175) | `'High platform crowding forecast around 08:00.'` | The `08:00` time is hardcoded. Should be derived from the forecast slot `startTime` returned by `PCDForecast` |
 
 ---
 
@@ -207,7 +222,7 @@ flutter build web --release
 
 ### 5. Assets
 8. **Custom Canva Hero Typography Asset**:
-   - Replace the current landing page typography component ([`LandingHeroGraphic`](lib/features/landing/widgets/landing_hero_graphic.dart)) with the custom Canva graphic once exported.
+   - [x] Replaced the pure programmatic text component in [`LandingHeroGraphic`](lib/features/landing/widgets/landing_hero_graphic.dart) with the Canva-exported SVG asset (`assets/data/NEXT.svg`) rendered via `flutter_svg` with white fill filtering, responsive `ConstrainedBox` scaling, and graceful typography fallback.
 
 
 ---

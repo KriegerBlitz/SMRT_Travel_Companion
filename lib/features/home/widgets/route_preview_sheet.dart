@@ -128,6 +128,7 @@ class RoutePreviewSheet extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Deferral Notice / Hand-off Banner
+          // TODO: Replace with full journey page once implemented.
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
